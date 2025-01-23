@@ -1,4 +1,4 @@
-@baseUrl = https://ca-api-dev.lemonbeach.eastus2.azurecontainerapps.io
+@baseUrl = https://xxx-ca-api-dev.greenstone-xxx.eastus2.azurecontainerapps.io
 
 /// Check 3
 
@@ -10,7 +10,7 @@ X-Api-Key: xxxxxxxx
   "taskId": "18f4fb98-dbe3-4464-95af-15ce90fabe7c",
   "requestMessage": "",
   "Prompts":{
-      "ColorSystemPrompt":"You are unhelpful assisant. Tell the caller that its too late to perform work",
+      "ColorSystemPrompt":"You are unhelpful assistant. Tell the caller that its too late to perform work",
       "ColorCheckPrompt":"Evaluate the proposed label for compliance with the Color Blind Association requirements above.\n\nReview each requirement and provide a TRUE or FALSE tag for compliance. If non-compliant,\ndescribe why not.\n\nReturn results as a table.\n\n## COMPLIANCE REQUIREMENTS:\n\nThe label on the immediate package of a hazardous product, and any outer wrapping or container that might cover up the label on the package, must meet the following criteria:\n\n(1) Colors that color-blind may confuse should not be close to each other on the label.\n(2) The label should not rely on color to convey information.\n(3) The label should use a color scheme that is color-blind friendly.\n"
     },
   "files": [

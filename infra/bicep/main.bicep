@@ -404,7 +404,7 @@ module openAI './core/ai/cognitive-services.bicep' = {
     chatGpt_Premium: {
       DeploymentName: 'gpt-4o'
       ModelName: 'gpt-4o'
-      ModelVersion: '2024-05-13'
+      ModelVersion: '2024-11-20'
       DeploymentCapacity: 10
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'

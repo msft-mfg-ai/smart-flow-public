@@ -148,7 +148,7 @@ jobs:
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
-      - name: Deploy Azure Resources (Sub))
+      - name: Deploy Azure Resources (Sub)
         uses: azure/arm-deploy@v2
         if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
         id: deploy-bicep-sub
