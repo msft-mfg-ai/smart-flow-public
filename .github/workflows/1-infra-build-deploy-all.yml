@@ -88,6 +88,7 @@ jobs:
     # You can't pass environment variables to templates, so put them in outputs here that you CAN pass
     name: Template Env Variables
     runs-on: ubuntu-latest
+    environment: ${{ inputs.deployEnvironment }}
     outputs:
       PROJECT_ROOT: ${{ github.workspace }}
       ENV_CODE: ${{ inputs.deployEnvironment }}
