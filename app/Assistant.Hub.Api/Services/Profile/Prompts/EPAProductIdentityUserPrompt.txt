@@ -1,7 +1,0 @@
-## EPA REGISTRAION INFORMATION:
-
-{{$EPARegistrationRetrievalResult}}
-
-## LABEL INFORMATION:
-
-{{$LabelText}}

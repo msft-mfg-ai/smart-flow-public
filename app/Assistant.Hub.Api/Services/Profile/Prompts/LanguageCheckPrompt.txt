@@ -1,9 +1,0 @@
-Evaluate the proposed label for compliance with the language rules listed below.
-
-Review each rule and apply it.
-
-Return results as a table.
-
-## Language Rules:
-
-{{$LanguageRulesResult}}

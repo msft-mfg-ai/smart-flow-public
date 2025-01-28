@@ -1,3 +1,0 @@
-Below is an image. Please identify and extract all the text present in the image according to the instructions given in the system prompt. 
-After extracting the text, provide a brief summary of its content. 
-If some text is unclear or partially visible, indicate this uncertainty.

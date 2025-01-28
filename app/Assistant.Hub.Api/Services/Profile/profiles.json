@@ -1,152 +1,40 @@
 [
   {
-    "Name": "General",
-    "Id": "General",
-    "Approach": "Chat",
-    "SecurityModel": "None",
-    "ChatSystemMessageFile": "ChatSimpleSystemPrompt",
-    "SampleQuestions": [
-      "Write a function in C# that will invoke a rest API",
-      "Explain why popcorn pops to a kid who loves watching it in the microwave."
-    ]
-  },
-  {
-    "Name": "Auto Body Damage Advisor",
-    "Id": "AutoBodyDamageAdvisor",
-    "Approach": "Chat",
-    "SecurityModel": "None",
-    "ChatSystemMessageFile": "AutoBodyCopilotSystemPromptV2",
-    "SampleQuestions": [
-      "What is the brand and model of this vehicle?",
-      "Classify this vehicle into 'Motorbike', 'SUV', 'Sedan', 'Truck', 'Convertible'"
-    ]
-  },
-  {
-    "Name": "AssistantApi",
-    "Id": "AssistantApi",
-    "Approach": "ENDPOINTASSISTANTV2",
-    "SecurityModel": "None",
-    "SecurityModelGroupMembership": [ "LocalDevUser" ],
-    "SampleQuestions": [
-      "Generate a plot with a sine wave repeating 20 times"
-    ],
-    "AssistantEndpointSettings": {
-      "APIEndpointSetting": "AssistantApiEndpoint",
-      "APIEndpointKeySetting": "AssistantApiKey"
-    }
-  },
-  {
-    "Name": "Document Chat",
-    "Id": "DocumentChat",
-    "Approach": "UserDocumentChat",
-    "SecurityModel": "None",
-    "SampleQuestions": [
-    ],
-    "RAGSettings": {
-      "GenerateSearchQueryPluginName": "GenerateSearchQuery",
-      "GenerateSearchQueryPluginQueryFunctionName": "GenerateSearchQuery",
-      "DocumentRetrievalPluginName": "DocumentRetrieval",
-      "DocumentRetrievalPluginQueryFunctionName": "KwiecienV2",
-      "ChatSystemMessageFile": "RAGChatSystemPrompt",
-      "StorageContianer": "content",
-      "AllowFileUpload":  true
-    }
-  },
-  {
-    "Name": "search-test",
-    "Id": "search",
+    "Name": "prompt-embedded-file",
+    "Description": "For a given image, this agent provides a report describing the damage",
+    "Format": "markdown",
     "Agents": [
       {
-        "Name": "BrandReview",
+        "Name": "DamageReview",
         "Type": "DynamicModelTask",
-        "SystemMessage": "inline::You are a helpful assistant.",
-        "UserMessage": "embeddedFile::LabelAnalysisBrandStandardUserPrompt",
-        "Tools": [
-          {
-            "Name": "EPA-Search",
-            "Function": "SearchDocumentsAsync",
-            "Type": "VectorSearchRetrievalPluginTools",
-            "RAGSettings": {
-              "RetrievalIndexName": "epa-docs-index"
-            }
-          },
-          {
-            "Name": "Product-Search",
-            "Function": "SearchDocumentsAsync",
-            "Type": "VectorSearchRetrievalPluginTools",
-            "RAGSettings": {
-              "RetrievalIndexName": "products-docs-index"
-            }
-          }
-        ]
+        "SystemMessage": "embeddedFile::AutoBodyDamageReviewSystemPrompt",
+        "UserMessage": "embeddedFile::AutoBodyDamageReviewUserPrompt"
       }
     ]
   },
   {
-    "Name": "PreCheck",
-    "Description": "PreCheck",
+    "Name": "prompt-supplied-by-user",
+    "Description": "For a given image, this agent provides a report describing if the image meets guidelines supplied by user",
     "Format": "markdown",
     "Agents": [
       {
-        "Name": "PreCheckTextExtraction",
-        "Type": "ToolModelTask",
-        "Tools": [
-          {
-            "Name": "ProductTextExtraction",
-            "Function": "PDFTextExtraction",
-            "Type": "DocumentIntelligenceExtractionTools"
-          },
-          {
-            "Name": "ImageNamedValueExtraction",
-            "Function": "LLMNamedEntityExtraction",
-            "Type": "EntityExtractionTools"
-          }
-        ]
-      },
-      {
-        "Name": "EPA Review",
-        "Type": "DynamicModelTask",
-        "SystemMessage": "inline::You are a helpful assistant.",
-        "UserMessage": "embeddedFile::EPAActiveIngredientUserPrompt",
-        "Tools": [
-          {
-            "Name": "EPARegistrationRetrieval",
-            "Function": "SearchRetrieval",
-            "Type": "VectorSearchRetrievalPluginTools",
-            "RAGSettings": {
-              "RetrievalIndexName": "labels-epa"
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "Name": "Check1",
-    "Description": "Check1",
-    "Format": "markdown",
-    "Agents": [
-      {
-        "Name": "ComplianceReview",
+        "Name": "ColorReview",
         "Type": "DynamicModelTask",
         "SystemMessage": "request::SystemPrompt",
-        "UserMessage": "request::LabelAnalysisComplianceRegulatoryUserPrompt"
-      },
+        "UserMessage": "request::UserPrompt"
+      }
+    ]
+  },
+  {
+    "Name": "prompt-in-profile-json",
+    "Description": "For a given image, this agent provides a report describing if the image meets color-blindness guidelines",
+    "Format": "markdown",
+    "Agents": [
       {
-        "Name": "BrandReview",
+        "Name": "ColorReview",
         "Type": "DynamicModelTask",
         "SystemMessage": "inline::You are a helpful assistant.",
-        "UserMessage": "embeddedFile::LabelAnalysisBrandStandardUserPrompt",
-        "Tools": [
-          {
-            "Name": "BrandStandards",
-            "Function": "RetrievalStub",
-            "Type": "VectorSearchRetrievalPluginTools",
-            "RAGSettings": {
-              "DataFileName": "BrandStandardReferenceData.txt"
-            }
-          }
-        ]
+        "UserMessage": "inline::Evaluate the proposed image for compliance with the Color Blind Association requirements.\n\nReview each requirement and provide a TRUE or FALSE tag for compliance. If non-compliant,\ndescribe why not.\n\nReturn results as a table.\n\n## COMPLIANCE REQUIREMENTS:\n\nThe image must meet the following criteria:\n\n(1) Colors that color-blind may confuse should not be close to each other on the image.\n(2) The image should not rely on color to convey information.\n(3) The image should use a color scheme that is color-blind friendly.\n"
       }
     ]
   }

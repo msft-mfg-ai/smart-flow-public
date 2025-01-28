@@ -1,3 +1,0 @@
-Extract the product name, regulator number, country, and UPC from the provided label text and image:
-
-{{$LabelText}}

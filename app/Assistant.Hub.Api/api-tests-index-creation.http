@@ -1,4 +1,3 @@
-# @baseUrl = https://localhost:32777
 @baseUrl = https://localhost:7179
 
 ### Check 1
