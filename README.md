@@ -69,7 +69,7 @@ Now that the secrets are provisioned, run the API application and you should see
 
 ![Run the API](./docs/images/run_api.png)
 
-Switch back to Visual Studio and open the [api-tests-prompt-in-embedded-file.http](app\Assistant.Hub.Api\api-tests-prompt-in-embedded-file.http) file. Update the port in the `@baseURL` variable, then click on the `Send Request` link, and you can run the tests to ensure the API is working correctly.
+Switch back to Visual Studio and open the [api-tests-prompt-in-embedded-file.http](app/Assistant.Hub.Api/api-tests-prompt-in-embedded-file.http) file. Update the port in the `@baseURL` variable, then click on the `Send Request` link, and you can run the tests to ensure the API is working correctly.
 
 ![API Tests](./docs/images/http_test.png)
 

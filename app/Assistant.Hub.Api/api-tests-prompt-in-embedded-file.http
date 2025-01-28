@@ -1,6 +1,10 @@
 @baseUrl = https://localhost:7179
+/// @baseUrl = https://XXXXXXXX-ca-api-dev.YYYYYYYY.eastus2.azurecontainerapps.io
 
 /// Car Damage Analysis - reads a prompt from a system embedded file and analyzes the supplied image
+/// If you want to call the cloud API, change the URL above and use an API key to authenticate. 
+/// Look up the api key from the Key Vault and put this line after your 'Content-Type:' line below
+/// X-Api-Key: <YOUR-KEY>
 
 POST {{baseUrl}}/api/task/prompt-embedded-file
 Content-Type: application/json
