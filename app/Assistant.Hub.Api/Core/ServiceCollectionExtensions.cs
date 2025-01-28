@@ -109,9 +109,6 @@ namespace Assistants.API.Core
                     dynamicAgentWorkflow.ImportPluginFromObject(documentIntelligenceExtractionTools, ContextVariableOptions.DocumentIntelligenceExtractionTools);
                 }
 
-                var productMasterRetrievalTool = new ProductMasterRetrievalTools(httpClient, config["ProductMasterEndpoint"]);
-                dynamicAgentWorkflow.ImportPluginFromObject(productMasterRetrievalTool, ContextVariableOptions.ProductMasterRetrievalTools);
-
                 var facade = new OpenAIClientFacade();
                 facade.RegisterKernel(ContextVariableOptions.KernelInstanceDynamicAgents, dynamicAgentWorkflow);
                 return facade;
