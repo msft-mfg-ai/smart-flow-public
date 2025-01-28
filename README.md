@@ -44,19 +44,33 @@ To run the base API application, open the [app/Assistant.Hub.Api/Assistant.Hub.A
 
 > Alternatively, you can add these values into the [appsettings.json](./app/Assistant.Hub.Api/appsettings.json) or appsettings.development.json file, just be sure not to check those values into source control!
 
-Find your URL and key and deployment name for your OpenAI instance, and then add these required keys to your secrets:
+Find your URL and key and deployment name for your OpenAI instance, and then add these required keys to your secrets. If you are NOT using Managed Identities, the AOAIStandardServiceKey key is required: (but you should be using them so this should be optional)
 
 ```bash
 "AOAIStandardServiceEndpoint": "https://<yourOpenai-instance>.openai.azure.com/",
-"AOAIStandardServiceKey": "<yourKey>",
 "AOAIStandardChatGptDeployment": "gpt-4o"
+"AOAIStandardServiceKey": "<yourKey-optional>",
 ```
 
-Run the API application and you should see it run on port 7179 (or some similar port).
+Find these additional resource endpoints and keys and propagate them into your secrets file:
+
+```bash
+
+  "AzureDocumentIntelligenceEndpoint": "https://<VALUE>.cognitiveservices.azure.com/",
+  "AzureDocumentIntelligenceKey": "<VALUE>",
+
+  "AzureAISearchEndpoint": "https://<VALUE>.search.windows.net",
+  "AzureAISearchKey": "<VALUE>",
+
+  "StorageAccountName": "<STORAGE_ACCOUNT_NAME>",
+  "ContentStorageContainer": "<STORAGE_CONTAINER_NAME>",
+```
+
+Now that the secrets are provisioned, run the API application and you should see it run on port 7179 (or some similar port).
 
 ![Run the API](./docs/images/run_api.png)
 
-Switch back to Visual Studio and open the [api-tests.http](app\Assistant.Hub.Api\api-tests.http) file. Update the port in the `@baseURL` variable, then click on the `Send Request` link, and you can run the tests to ensure the API is working correctly.
+Switch back to Visual Studio and open the [api-tests-prompt-in-embedded-file.http](app\Assistant.Hub.Api\api-tests-prompt-in-embedded-file.http) file. Update the port in the `@baseURL` variable, then click on the `Send Request` link, and you can run the tests to ensure the API is working correctly.
 
 ![API Tests](./docs/images/http_test.png)
 
