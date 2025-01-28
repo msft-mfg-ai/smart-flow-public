@@ -47,7 +47,7 @@ To run the base API application, open the [app/Assistant.Hub.Api/Assistant.Hub.A
 Find your URL and key and deployment name for your OpenAI instance, and then add these required keys to your secrets. If you are NOT using Managed Identities, the AOAIStandardServiceKey key is required: (but you should be using them so this should be optional)
 
 ```bash
-"AOAIStandardServiceEndpoint": "https://<yourOpenai-instance>.openai.azure.com/",
+"AOAIStandardServiceEndpoint": "https://<YOUR-INSTANCE>.openai.azure.com/",
 "AOAIStandardChatGptDeployment": "gpt-4o"
 "AOAIStandardServiceKey": "<yourKey-optional>",
 ```
@@ -55,15 +55,14 @@ Find your URL and key and deployment name for your OpenAI instance, and then add
 Find these additional resource endpoints and keys and propagate them into your secrets file:
 
 ```bash
+"AzureDocumentIntelligenceEndpoint": "https://<YOUR-INSTANCE>.cognitiveservices.azure.com/",
+"AzureDocumentIntelligenceKey": "<VALUE>",
 
-  "AzureDocumentIntelligenceEndpoint": "https://<VALUE>.cognitiveservices.azure.com/",
-  "AzureDocumentIntelligenceKey": "<VALUE>",
+"AzureAISearchEndpoint": "https://<YOUR-INSTANCE>.search.windows.net",
+"AzureAISearchKey": "<VALUE>",
 
-  "AzureAISearchEndpoint": "https://<VALUE>.search.windows.net",
-  "AzureAISearchKey": "<VALUE>",
-
-  "StorageAccountName": "<STORAGE_ACCOUNT_NAME>",
-  "ContentStorageContainer": "<STORAGE_CONTAINER_NAME>",
+"StorageAccountName": "<STORAGE_ACCOUNT_NAME>",
+"ContentStorageContainer": "<STORAGE_CONTAINER_NAME>",
 ```
 
 Now that the secrets are provisioned, run the API application and you should see it run on port 7179 (or some similar port).
