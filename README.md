@@ -73,7 +73,7 @@ Switch back to Visual Studio and open the [api-tests-prompt-in-embedded-file.htt
 
 ![API Tests](./docs/images/http_test.png)
 
-> Note: this documentation shows examples using Visual Studio, but you can also run each of these steps in VS Code, including managing user secrets using [this extension](https://marketplace.visualstudio.com/items?itemName=adrianwilczynski.user-secrets) and the executing the http test client.
+> Note: this documentation shows examples using Visual Studio Code, but you can also run each of these steps in VS or in VS Code, including managing user secrets in VS Code using [this extension](https://marketplace.visualstudio.com/items?itemName=adrianwilczynski.user-secrets) and the executing the http test client.
 
 ---
 
