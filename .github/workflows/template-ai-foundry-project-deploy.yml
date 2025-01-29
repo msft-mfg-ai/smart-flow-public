@@ -1,8 +1,9 @@
 # ------------------------------------------------------------------------------------------------------------------------
 # Reusable Workflow: Deploying a Container App from a Registry
+# See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects?tabs=azurecli
 # ------------------------------------------------------------------------------------------------------------------------
-name: z_template_deploy_container_app
-run-name: Deploy Container App
+name: z_template_deploy_ai_foundry_project
+run-name: Deploy AI Foundry Project
 on:
   workflow_call:
     inputs:

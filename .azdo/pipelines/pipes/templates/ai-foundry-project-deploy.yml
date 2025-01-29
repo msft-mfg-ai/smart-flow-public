@@ -1,5 +1,6 @@
 # ----------------------------------------------------------------------------------------------------
 # Template to deploy a Project inside of an AI Foundry Hub
+# See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects?tabs=azurecli
 # ----------------------------------------------------------------------------------------------------
 # This template gets the appName from the variable group: AI.Doc.Review.Keys
 #   and the resource group name from /vars/var-<env>.yml
