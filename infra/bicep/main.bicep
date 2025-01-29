@@ -85,12 +85,8 @@ param existing_CogServices_RG_Name string = ''
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
 // --------------------------------------------------------------------------------------------------------------
-@description('Should we deploy an AI Hub?')
+@description('Should we deploy an AI Foundry Hub?')
 param deployAIHub bool = true
-@description('Friendly name for your Azure AI resource')
-param aiHubFriendlyName string = 'Smart-Flow AI Hub'
-@description('Description of your Azure AI resource displayed in AI studio')
-param aiHubDescription string = 'This is an AI Foundry for use with the Smart-Flow application.'
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
@@ -450,8 +446,6 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
   name: 'aihub${deploymentSuffix}'
   params: {
     aiHubName: resourceNames.outputs.aiHubName
-    aiHubFriendlyName: aiHubFriendlyName
-    aiHubDescription: aiHubDescription
     location: location
     tags: tags
 

@@ -15,7 +15,7 @@ param aiHubName string
 param aiHubFriendlyName string = aiHubName
 
 @description('Description of your Azure AI Hub resource, displayed in the Studio UI.')
-param aiHubDescription string
+param aiHubDescription string = 'This is an AI Foundry for use with the Smart-Flow application.'
 
 @description('Resource ID of the Azure Application Insights resource for storing diagnostics logs.')
 param applicationInsightsId string
