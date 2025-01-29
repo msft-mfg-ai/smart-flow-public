@@ -1,4 +1,5 @@
 // Copied from https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.machinelearningservices/aistudio-entraid-passthrough
+// See also https://learn.microsoft.com/en-us/samples/azure-samples/azure-ai-studio-secure-bicep/azure-ai-studio-secure-bicep/
 // Creates an Azure AI Hub resource with proxied endpoints for the Azure AI services provider
 
 @description('Azure region used for the deployment of the Azure AI Hub.')

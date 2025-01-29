@@ -1,5 +1,5 @@
 // Copied from https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.machinelearningservices/aistudio-basics
-
+// See also: https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-hub-template
 // Creates an Azure AI Hub resource with proxied endpoints for the Azure AI services provider
 
 @description('Azure region used for the deployment of the Azure AI Hub.')
