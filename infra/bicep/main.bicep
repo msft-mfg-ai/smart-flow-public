@@ -446,7 +446,7 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
   ]
 }
 
-module aiHub 'core/ai/ai-hub-basic.bicep' = if (deployAIHub) {
+module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
   name: 'aihub${deploymentSuffix}'
   params: {
     aiHubName: resourceNames.outputs.aiHubName
@@ -462,6 +462,11 @@ module aiHub 'core/ai/ai-hub-basic.bicep' = if (deployAIHub) {
     containerRegistryId: containerRegistry.outputs.id
     keyVaultId: keyVault.outputs.id
     storageAccountId: storage.outputs.id
+
+    // add data scientist role to user and application
+    addRoleAssignments: addRoleAssignments
+    userObjectId: principalId
+    managedIdentityId: identity.outputs.managedIdentityId
   }
 }
 
