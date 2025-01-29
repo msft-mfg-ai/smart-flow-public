@@ -16,6 +16,7 @@ param existing_LogAnalytics_Name = 'log-Default-eastus'
 param existing_AppInsights_Name = 'appi--default-eastus'
 param existing_managedAppEnv_Name = 'caeaidocmentrevieweastus'
 param appendResourceTokens = false
+param deployAIHub = true
 // param addRoleAssignments = #{addRoleAssignments}#
 // param createDnsZones = #{createDnsZones}#
 // param publicAccessEnabled = #{publicAccessEnabled}#

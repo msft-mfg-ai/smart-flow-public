@@ -43,6 +43,10 @@ parameters:
     displayName: Create DNS Zones?
     type: boolean
     default: true
+  - name: deployAIHub
+    displayName: Deploy AI Hub?
+    type: boolean
+    default: true
   - name: addRoleAssignments
     displayName: Add Role Assignments?
     type: boolean
@@ -97,6 +101,7 @@ stages:
       createResourceGroup: ${{ parameters.createResourceGroup }}
       publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
       createDnsZones: ${{ parameters.createDnsZones }}
+      deployAIHub: ${{ parameters.deployAIHub }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false
@@ -109,6 +114,7 @@ stages:
       createResourceGroup: ${{ parameters.createResourceGroup }}
       publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
       createDnsZones: ${{ parameters.createDnsZones }}
+      deployAIHub: ${{ parameters.deployAIHub }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false

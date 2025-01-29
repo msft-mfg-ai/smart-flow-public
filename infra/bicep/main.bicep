@@ -83,6 +83,16 @@ param existing_CogServices_Name string = ''
 param existing_CogServices_RG_Name string = ''
 
 // --------------------------------------------------------------------------------------------------------------
+// AI Hub Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy an AI Hub?')
+param deployAIHub bool = true
+@description('Friendly name for your Azure AI resource')
+param aiHubFriendlyName string = 'Demo AI Hub'
+@description('Description of your Azure AI resource displayed in AI studio')
+param aiHubDescription string = 'This is an example AI resource for use in Azure AI Studio.'
+
+// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 param apiImageName string = ''
@@ -434,6 +444,25 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
   dependsOn: [
     searchService
   ]
+}
+
+module aiHub 'core/ai/ai-hub-basic.bicep' = if (deployAIHub) {
+  name: 'aihub-${deploymentSuffix}'
+  params: {
+    aiHubName: resourceNames.outputs.aiHubName
+    aiHubFriendlyName: aiHubFriendlyName
+    aiHubDescription: aiHubDescription
+    location: location
+    tags: tags
+
+    // dependent resources
+    aiServicesId: openAI.outputs.id
+    aiServicesTarget: openAI.outputs.endpoint
+    applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+    containerRegistryId: containerRegistry.outputs.id
+    keyVaultId: keyVault.outputs.id
+    storageAccountId: storage.outputs.id
+  }
 }
 
 // --------------------------------------------------------------------------------------------------------------

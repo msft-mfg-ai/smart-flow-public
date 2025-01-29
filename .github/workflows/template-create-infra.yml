@@ -49,6 +49,10 @@ on:
         description: Create DNS Zones?
         type: boolean
         default: false
+      deployAIHub:
+        description: Deploy AI Hub?
+        type: boolean
+        default: false
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
@@ -76,6 +80,7 @@ jobs:
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
+      deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
 
     # ------------------------------------------------------------------------------------------------------------------------

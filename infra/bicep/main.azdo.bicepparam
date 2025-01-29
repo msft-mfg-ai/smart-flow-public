@@ -16,3 +16,9 @@ param subnet1Name = '#{subnet1Name}#'
 param subnet2Name = '#{subnet2Name}#'
 param myIpAddress = '#{AdminIpAddress}#'
 param principalId = '#{AdminPrincipalId}#'
+param deployAIHub = #{deployAIHub}#
+
+// param existing_ACR_Name = 'crxxxxxxx'
+// param existing_LogAnalytics_Name = 'logxxxxxx'
+// param existing_AppInsights_Name = 'appixxxxxx'
+// param existing_managedAppEnv_Name = 'caexxxxxx'
