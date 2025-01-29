@@ -88,9 +88,9 @@ param existing_CogServices_RG_Name string = ''
 @description('Should we deploy an AI Hub?')
 param deployAIHub bool = true
 @description('Friendly name for your Azure AI resource')
-param aiHubFriendlyName string = 'Demo AI Hub'
+param aiHubFriendlyName string = 'Smart-Flow AI Hub'
 @description('Description of your Azure AI resource displayed in AI studio')
-param aiHubDescription string = 'This is an example AI resource for use in Azure AI Studio.'
+param aiHubDescription string = 'This is an AI Foundry for use with the Smart-Flow application.'
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing images
@@ -447,7 +447,7 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
 }
 
 module aiHub 'core/ai/ai-hub-basic.bicep' = if (deployAIHub) {
-  name: 'aihub-${deploymentSuffix}'
+  name: 'aihub${deploymentSuffix}'
   params: {
     aiHubName: resourceNames.outputs.aiHubName
     aiHubFriendlyName: aiHubFriendlyName
@@ -619,3 +619,5 @@ output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endp
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
+output AI_HUB_NAME string = aiHub.outputs.name
+output AI_HUB_ID string = aiHub.outputs.id

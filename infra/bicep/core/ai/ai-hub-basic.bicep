@@ -35,7 +35,7 @@ param aiServicesId string
 @description('Endpoint for the AI Services')
 param aiServicesTarget string
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
   name: aiHubName
   location: location
   tags: tags
@@ -55,7 +55,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
   }
   kind: 'hub'
 
-  resource aiServicesConnection 'connections@2024-01-01-preview' = {
+  resource aiServicesConnection 'connections@2024-10-01' = {
     name: '${aiHubName}-connection-AzureOpenAI'
     properties: {
       category: 'AzureOpenAI'
@@ -73,4 +73,5 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
   }
 }
 
-output aiHubID string = aiHub.id
+output id string = aiHub.id
+output name string = aiHub.name

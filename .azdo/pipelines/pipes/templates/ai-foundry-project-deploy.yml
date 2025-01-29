@@ -1,0 +1,76 @@
+# ----------------------------------------------------------------------------------------------------
+# Template to deploy a Project inside of an AI Foundry Hub
+# ----------------------------------------------------------------------------------------------------
+# This template gets the appName from the variable group: AI.Doc.Review.Keys
+#   and the resource group name from /vars/var-<env>.yml
+# ----------------------------------------------------------------------------------------------------
+parameters:
+  - name: serviceConnectionName
+    type: string
+  - name: environmentName
+    default: 'DEV'
+    type: string
+  - name: hubId
+    default: ''
+    type: string
+  - name: projectName
+    default: ''
+    type: string
+
+# ----------------------------------------------------------------------------------------------------
+jobs:
+  - deployment: InitDeployAIHP${{ parameters.projectName }}${{ parameters.environmentName }}
+    displayName: Init Deploy AIHP ${{ parameters.projectName }} ${{ parameters.environmentName }}
+    environment: ${{ parameters.environmentName }}
+
+  - job: DeployAIHProject${{ parameters.projectName }}${{ parameters.environmentName }}Job
+    displayName: Deploy AIH Project ${{ parameters.projectName }} ${{ parameters.environmentName }}
+    variables:
+      - group: AI.Doc.Review.Keys # need to get the appName from here
+      # Bring in environment specific variable files
+      - ${{ if eq(lower(parameters.environmentName), 'dev') }}:
+          - template: ../../vars/var-dev.yml
+      - ${{ if eq(lower(parameters.environmentName), 'qa') }}:
+          - template: ../../vars/var-qa.yml
+      - ${{ if eq(lower(parameters.environmentName), 'prod') }}:
+          - template: ../../vars/var-prod.yml
+
+    steps:
+      # ----------------------------------------------------------------------------------------------------
+      # Set up the environment variables
+      # ----------------------------------------------------------------------------------------------------
+      - task: PowerShell@2
+        name: createVariables
+        displayName: Create Variables
+        continueOnError: true
+        inputs:
+          targetType: 'inline'
+          script: |
+            $environmentNameLower="${{ parameters.environmentName }}".ToLower()
+
+            $resourceGroupName="$(resourceGroupPrefix)-$environmentNameLower".ToLower()
+            echo "##vso[task.setvariable variable=resourceGroupName]$resourceGroupName"
+
+            echo "hubId=${{ parameters.hubId }}"
+            echo "projectName=${{ parameters.projectName }}"
+
+            echo "----------------------------------------"
+            echo "##[group]Display All Environment Variables:"
+            printenv | sort
+            echo "##[endgroup]"
+
+      # ----------------------------------------------------------------------------------------------------
+      # Deploy the AI Foundry Hub Project
+      # ----------------------------------------------------------------------------------------------------
+      - task: AzureCLI@2
+        displayName: Deploy AI Foundry Hub Project
+        inputs:
+          AzureSubscription: $(serviceConnectionName)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            az ml workspace create \
+              --kind project \
+              --resource-group $(resourceGroupName) \
+              --hub-id ${{ parameters.hubId }} \
+              --name ${{ parameters.projectName }}
