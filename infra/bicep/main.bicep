@@ -598,6 +598,7 @@ module containerAppBatch './core/host/containerappstub.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
+output SUBSCRIPTION_ID string = subscription().subscriptionId
 output ACR_NAME string = containerRegistry.outputs.name
 output ACR_URL string = containerRegistry.outputs.loginServer
 output AI_ENDPOINT string = openAI.outputs.endpoint

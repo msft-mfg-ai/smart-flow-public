@@ -12,13 +12,13 @@ env:
   # these are defined by the project itself, so they can stay here...
   ACR_REPO_NAME: 'aiflows'
 
-  API_APP_PATH: 'app/Assistant.Hub.UI'
-  API_ACR_APP_NAME: 'assistantui'
-  API_PORT: '80'
+  API_APP_PATH: 'app/Assistant.Hub.Api'
+  API_ACR_APP_NAME: 'assistantapi'
+  API_PORT: '8080'
 
   BATCH_APP_PATH: 'app/Assistant.Hub.Api.Batch'
   BATCH_ACR_APP_NAME: 'assistantbatch'
-  BATCH_PORT: '4001'
+  BATCH_PORT: '8080'
   
 jobs:
   template-env:

@@ -97,6 +97,10 @@ jobs:
         if: ${{ inputs.runCreateInfra }}
         uses: actions/checkout@v4
 
+      - name: Get the current date
+        id: get-date
+        run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
       - name: Display Variables and Files
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
@@ -159,10 +163,6 @@ jobs:
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
-      - name: Get the current date
-        id: get-date
-        run: echo "DTS=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
-
       - name: Deploy Azure Resources (Sub)
         uses: azure/arm-deploy@v2
         if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
@@ -170,7 +170,7 @@ jobs:
         with:
           scope: subscription
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DTS}}
+          deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
@@ -182,7 +182,7 @@ jobs:
         with:
           scope: resourcegroup
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DTS}}
+          deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           resourceGroupName: ${{ env.generatedResourceGroupName }}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
@@ -226,6 +226,9 @@ jobs:
           SUMMARY: |
             # Deployment summary
             - Target Resource Group: ${{ env.generatedResourceGroupName }}
+            - Subscription Id: ${{ steps.deploy-bicep-rg.outputs.SUBSCRIPTION_ID }}
+            - Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+            - Hub Id: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
         # - Link to App URL: [https://${{ steps.deploy-bicep-rg.outputs.hostName }}](https://${{ steps.deploy-bicep-rg.outputs.hostName }})

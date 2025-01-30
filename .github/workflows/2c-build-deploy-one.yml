@@ -50,11 +50,11 @@ env:
 
   API_APP_PATH: 'app/Assistant.Hub.Api'
   API_ACR_APP_NAME: 'assistantapi'
-  API_PORT: '80'
+  API_PORT: '8080'
 
   BATCH_APP_PATH: 'app/Assistant.Hub.Api.Batch'
   BATCH_ACR_APP_NAME: 'assistantbatch'
-  BATCH_PORT: '4001'
+  BATCH_PORT: '8080'
   # activation is getting an error: The TargetPort 80 does not match the listening port 39581. The TargetPort 80 does not match any of the listening ports: [39581 4001 4001].
 
 # ------------------------------------------------------------------------------------------------------------------------

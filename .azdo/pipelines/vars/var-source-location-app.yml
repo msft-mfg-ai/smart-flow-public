@@ -21,4 +21,4 @@ variables:
   - name: BATCH_ACR_APP_NAME
     value: 'assistantbatch'
   - name: BATCH_PORT
-    value: '80'
+    value: '8080'

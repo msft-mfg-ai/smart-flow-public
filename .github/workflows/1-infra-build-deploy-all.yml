@@ -83,7 +83,7 @@ env:
 
   BATCH_APP_PATH: 'app/Assistant.Hub.Api.Batch'
   BATCH_ACR_APP_NAME: 'assistantbatch'
-  BATCH_PORT: '80'
+  BATCH_PORT: '8080'
   # activation is getting an error: The TargetPort 80 does not match the listening port 39581. The TargetPort 80 does not match any of the listening ports: [39581 4001 4001].
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
-      
+
   # ------------------------------------------------------------------------------------------------------------------------
   build-all:
     name: Build All Apps
@@ -243,7 +243,7 @@ jobs:
     with:
       ENV_CODE: ${{ inputs.deployEnvironment }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      HUB_ID: ${{ needs.deploy-bicep.outputs.AI_HUB_ID }}
+      HUB_ID: ${{ needs.deploy-bicep.deploy.outputs.AI_HUB_ID }}
       PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
