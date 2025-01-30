@@ -230,7 +230,7 @@ jobs:
       PORT: ${{ needs.template-env.outputs.BATCH_PORT }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
-  deploy-foundry:
+  deploy-foundry-project:
     name: Deploy Foundry Project ${{ inputs.deployEnvironment }}
     uses: ./.github/workflows/template-ai-foundry-project-deploy.yml
     if: inputs.deployAIHub

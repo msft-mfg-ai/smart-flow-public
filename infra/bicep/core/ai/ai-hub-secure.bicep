@@ -67,19 +67,38 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview'
     systemDatastoresAuthMode: 'identity'
   }
 
-  resource aiServicesConnection 'connections@2024-04-01-preview' = {
+  resource aiServicesConnection 'connections@2024-10-01' = {
     name: '${aiHubName}-connection'
     properties: {
-      category: 'OpenAI' // 'AIServices'  Get's error: The associated account is of kind OpenAI. Please provide an account of kind AIServices. 
+      category: 'AzureOpenAI'
       target: aiServicesTarget
-      authType: 'AAD'
+      authType: 'ApiKey'
       isSharedToAll: true
+      credentials: {
+        key: '${listKeys(aiServicesId, '2021-10-01').key1}'
+      }
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
       }
     }
   }
+  
+  // This fails...
+  // resource aiServicesConnection 'connections@2024-04-01-preview' = {
+  //   name: '${aiHubName}-connection'
+  //   properties: {
+  //     category: 'OpenAI'        // Error: Unsupported authtype AAD for OpenAI (Code: ValidationError)
+  //     // category: 'AIServices' // Error: The associated account is of kind OpenAI. Please provide an account of kind AIServices. 
+  //     target: aiServicesTarget
+  //     authType: 'AAD'
+  //     isSharedToAll: true
+  //     metadata: {
+  //       ApiType: 'Azure'
+  //       ResourceId: aiServicesId
+  //     }
+  //   }
+  // }
 }
 
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
