@@ -44,7 +44,6 @@ jobs:
       envCode: ${{ inputs.envCode }}
     steps:
       - name: Checkout Code
-        if: ${{ inputs.runCreateInfra }}
         uses: actions/checkout@v4
 
       - name: Get the current date
