@@ -25,6 +25,21 @@ on:
       HUB_ID_2:
         required: true
         type: string
+      HUB_ID_3:
+        required: true
+        type: string
+      HUB_NAME:
+        required: true
+        type: string
+      HUB_NAME_1:
+        required: true
+        type: string
+      HUB_NAME_2:
+        required: true
+        type: string
+      HUB_NAME_3:
+        required: true
+        type: string
       PROJECT_NAME:
         required: true
         type: string
@@ -44,6 +59,11 @@ jobs:
           echo "inputs.HUB_ID=${{ inputs.HUB_ID }}"
           echo "inputs.HUB_ID_1=${{ inputs.HUB_ID_1 }}"
           echo "inputs.HUB_ID_2=${{ inputs.HUB_ID_2 }}"
+          echo "inputs.HUB_ID_3=${{ inputs.HUB_ID_3 }}"
+          echo "inputs.HUB_NAME=${{ inputs.HUB_NAME }}"
+          echo "inputs.HUB_NAME_1=${{ inputs.HUB_NAME_1 }}"
+          echo "inputs.HUB_NAME_2=${{ inputs.HUB_NAME_2 }}"
+          echo "inputs.HUB_NAME_3=${{ inputs.HUB_NAME_3 }}"
           echo "inputs.PROJECT_NAME=${{ inputs.PROJECT_NAME }}"
 
           echo "---------------------------------"

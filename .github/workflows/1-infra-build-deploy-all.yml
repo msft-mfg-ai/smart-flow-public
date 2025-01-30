@@ -247,8 +247,10 @@ jobs:
       HUB_NAME:       ${{ needs.deploy-bicep.outputs.HUB_NAME }}
       HUB_NAME_1:     ${{ needs.deploy-bicep.deploy.outputs.HUB_NAME }}
       HUB_NAME_2:     ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_NAME }}
+      HUB_NAME_3:     ${{ needs.deploy-bicep.steps.deploy.outputs.HUB_NAME }}
       HUB_ID_1:       ${{ needs.deploy-bicep.outputs.HUB_ID }}
       HUB_ID_2:       ${{ needs.deploy-bicep.deploy.outputs.HUB_ID }}
+      HUB_ID_3:       ${{ needs.deploy-bicep.steps.deploy.outputs.HUB_ID }}
       HUB_ID:         ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_ID }}
       PROJECT_NAME:   ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
 
