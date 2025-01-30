@@ -23,7 +23,7 @@ on:
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   deploy:
-    name: deploy ${{ inputs.ENV_CODE }} ${{ inputs.PROJECT_NAME }}
+    name: deploy project ${{ inputs.ENV_CODE }} ${{ inputs.PROJECT_NAME }}
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.ENV_CODE }}

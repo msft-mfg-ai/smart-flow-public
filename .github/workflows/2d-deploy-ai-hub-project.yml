@@ -54,8 +54,8 @@ jobs:
           echo "inputs.AI_HUB_PROJECT_NAME: ${{ inputs.AI_HUB_PROJECT_NAME }}"
 
   # ------------------------------------------------------------------------------------------------------------------------
-  deploy-foundry-project:
-    name: Deploy Foundry Project ${{ inputs.deployEnvironment }}
+  deploy-hub-project:
+    name: Deploy Hub Project ${{ inputs.deployEnvironment }}
     uses: ./.github/workflows/template-ai-hub-project-deploy.yml
     needs:
       - template-env
