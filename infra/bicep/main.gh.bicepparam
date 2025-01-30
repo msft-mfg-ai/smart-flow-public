@@ -22,6 +22,6 @@ param deployAIHub = #{deployAIHub}#
 // param existing_ACR_ResourceGroupName = ''
 // param existing_LogAnalytics_Name = 'logxxxxxx'
 // param existing_AppInsights_Name = 'appixxxxxx'
-param existing_managedAppEnv_Name = 'llsfpub129-cae-dev'
+// param existing_managedAppEnv_Name = 'xxxxxx-cae-dev'
 // param existing_CogServices_Name = ''
 // param existing_CogServices_RG_Name = ''
