@@ -232,19 +232,19 @@ jobs:
   # # ------------------------------------------------------------------------------------------------------------------------
   # # Once I figure out how to get the resource id for the AI Hub as an output of the deploy-bicep step, I can uncomment this
   # # ------------------------------------------------------------------------------------------------------------------------
-  # deploy-hub-project:
-  #   name: Deploy Hub Project ${{ inputs.deployEnvironment }}
-  #   uses: ./.github/workflows/template-ai-hub-project-deploy.yml
-  #   if: inputs.deployAIHub
-  #   needs:
-  #     - deploy-bicep
-  #     - template-env
-  #   secrets: inherit
-  #   with:
-  #     ENV_CODE: ${{ inputs.deployEnvironment }}
-  #     RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-  #     HUB_ID: ${{ needs.deploy-bicep.outputs.AI_HUB_ID }}
-  #     PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
+  deploy-hub-project:
+    name: Deploy Hub Project ${{ inputs.deployEnvironment }}
+    uses: ./.github/workflows/template-ai-hub-project-deploy.yml
+    if: inputs.deployAIHub
+    needs:
+      - deploy-bicep
+      - template-env
+    secrets: inherit
+    with:
+      ENV_CODE: ${{ inputs.deployEnvironment }}
+      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+      HUB_ID: ${{ needs.deploy-bicep.outputs.AI_HUB_ID }}
+      PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
   # # Future use...!
