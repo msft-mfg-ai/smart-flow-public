@@ -229,9 +229,9 @@ jobs:
       IMAGE_NAME: ${{ needs.build-all.outputs.BATCH_IMAGE_NAME }}
       PORT: ${{ needs.template-env.outputs.BATCH_PORT }}
 
-  # # ------------------------------------------------------------------------------------------------------------------------
-  # # Once I figure out how to get the resource id for the AI Hub as an output of the deploy-bicep step, I can uncomment this
-  # # ------------------------------------------------------------------------------------------------------------------------
+  # ------------------------------------------------------------------------------------------------------------------------
+  # Once I figure out how to get the resource id for the AI Hub as an output of the deploy-bicep step, this should work...
+  # ------------------------------------------------------------------------------------------------------------------------
   deploy-hub-project:
     name: Deploy ${{ inputs.deployEnvironment }} Hub Project
     uses: ./.github/workflows/template-ai-hub-project-deploy.yml
