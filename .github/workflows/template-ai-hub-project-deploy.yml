@@ -1,16 +1,27 @@
 # ------------------------------------------------------------------------------------------------------------------------
-# Reusable Workflow: Deploying a Container App from a Registry
+# Reusable Workflow: Deploying a Project in an AI Foundry Hub
 # See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects?tabs=azurecli
+# ------------------------------------------------------------------------------------------------------------------------
+# Note - I'm having trouble with this...
+#   You need the resource Id to deploy the project
+#   The hub is created in an earlier step with Bicep and I can't seem to get the output variables to pass through...
+#   So I'm recreating it with a simple Bicep file here
+# ------------------------------------------------------------------------------------------------------------------------
+#   I could also maybe do something like this if I had the name of the hub, but I don't have that either yet...
+#     $myResourceId=(az resource list --name 'myapp-hub-dev' --query "[].id" -otsv)
 # ------------------------------------------------------------------------------------------------------------------------
 name: z_template_deploy_ai_hub_project
 run-name: Deploy AI Hub Project
 on:
   workflow_call:
     inputs:
-      ENV_CODE:
+      envCode:
         required: true
         type: string
-      RESOURCE_GROUP:
+      resourceGroupName:
+        required: true
+        type: string
+      projectName:
         required: true
         type: string
       templatePath:
@@ -29,17 +40,14 @@ on:
         required: false
         type: string
         default: 'false'
-      PROJECT_NAME:
-        required: true
-        type: string
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   deploy:
-    name: Deploy Project ${{ inputs.ENV_CODE }} ${{ inputs.PROJECT_NAME }}
+    name: Deploy Project ${{ inputs.envCode }} ${{ inputs.projectName }}
     runs-on: ubuntu-latest
     environment:
-      name: ${{ inputs.ENV_CODE }}
+      name: ${{ inputs.envCode }}
     env:
       envCode: ${{ inputs.envCode }}
     steps:
@@ -53,7 +61,7 @@ jobs:
       - name: Display Variables and Files
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
-          echo "inputs.RESOURCE_GROUP=${{ inputs.RESOURCE_GROUP }}"
+          echo "inputs.resourceGroupName=${{ inputs.resourceGroupName }}"
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
@@ -106,7 +114,7 @@ jobs:
         with:
           scope: resourcegroup
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          resourceGroupName: ${{ inputs.RESOURCE_GROUP }}
+          resourceGroupName: ${{ inputs.resourceGroupName }}
           deploymentName: ${{ inputs.templateFile }}-find-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
@@ -140,9 +148,9 @@ jobs:
       - name: Deploy AI Foundry Project
         run: |
           az config set extension.dynamic_install_allow_preview=true          
-          echo "az ml workspace create --kind project --resource-group ${{ inputs.RESOURCE_GROUP }} --hub-id ${{ inputs.HUB_ID }} --name ${{ inputs.PROJECT_NAME }}"
+          echo "az ml workspace create --kind project --resource-group ${{ inputs.resourceGroupName }} --hub-id ${{ inputs.HUB_ID }} --name ${{ inputs.projectName }}"
           az ml workspace create \
             --kind project \
-            --resource-group ${{ inputs.RESOURCE_GROUP }} \
+            --resource-group ${{ inputs.resourceGroupName }} \
             --hub-id ${{ steps.run-bicep.outputs.AI_HUB_ID }} \
-            --name ${{ inputs.PROJECT_NAME }}
+            --name ${{ inputs.projectName }}
