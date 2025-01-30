@@ -460,7 +460,9 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
     // add data scientist role to user and application
     addRoleAssignments: addRoleAssignments
     userObjectId: principalId
+    userObjectType: 'User'
     managedIdentityId: identity.outputs.managedIdentityId
+    managedIdentityType: 'ServicePrincipal'
   }
 }
 
@@ -593,30 +595,30 @@ module containerAppBatch './core/host/containerappstub.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
+output ACR_NAME string = containerRegistry.outputs.name
+output ACR_URL string = containerRegistry.outputs.loginServer
+output AI_ENDPOINT string = openAI.outputs.endpoint
+output AI_HUB_ID string = aiHub.outputs.id
+output AI_HUB_NAME string = aiHub.outputs.name
+output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
+output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
+output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
+output API_KEY string = apiKeyValue
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
+output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+output AZURE_RESOURCE_GROUP string = resourceGroupName
+output COSMOS_CONTAINER_NAME string = uiChatContainerName
+output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
+output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
+output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
+output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
 output RESOURCE_TOKEN string = resourceToken
+output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
+output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
+output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
+output STORAGE_ACCOUNT_NAME string = storage.outputs.name
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
-output AZURE_RESOURCE_GROUP string = resourceGroupName
-output ACR_NAME string = containerRegistry.outputs.name
-output ACR_URL string = containerRegistry.outputs.loginServer
-output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
-output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
-output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output API_KEY string = apiKeyValue
-output STORAGE_ACCOUNT_NAME string = storage.outputs.name
-output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
-output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
-output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
-output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output AI_ENDPOINT string = openAI.outputs.endpoint
-output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
-output COSMOS_CONTAINER_NAME string = uiChatContainerName
-output AI_HUB_NAME string = aiHub.outputs.name
-output AI_HUB_ID string = aiHub.outputs.id

@@ -40,9 +40,11 @@ param addRoleAssignments bool = true
 
 @description('The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub.')
 param userObjectId string = ''
+param userObjectType string = 'User'
 
 @description('The object ID of the application identity to be granted necessary role assignments to access the Azure AI Hub.')
 param managedIdentityId string = ''
+param managedIdentityType string = 'ServicePrincipal'
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
   name: aiHubName
@@ -68,7 +70,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview'
   resource aiServicesConnection 'connections@2024-04-01-preview' = {
     name: '${aiHubName}-connection'
     properties: {
-      category: 'AIServices'
+      category: 'OpenAI' // 'AIServices'  Get's error: The associated account is of kind OpenAI. Please provide an account of kind AIServices. 
       target: aiServicesTarget
       authType: 'AAD'
       isSharedToAll: true
@@ -86,7 +88,7 @@ resource adminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   scope: aiHub
   properties: {
     principalId: userObjectId
-    principalType: 'User'
+    principalType: userObjectType
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRole)
     description: 'Permission for admin ${userObjectId} to use ${aiHubName}'
   }
@@ -96,8 +98,8 @@ resource applicationAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   name: guid(aiHub.id, managedIdentityId, 'dataScientistRole')
   scope: aiHub
   properties: {
-    principalId: userObjectId
-    principalType: 'ServicePrincipal'
+    principalId: managedIdentityId
+    principalType: managedIdentityType
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRole)
     description: 'Permission for application ${managedIdentityId} to use ${aiHubName}'
   }
