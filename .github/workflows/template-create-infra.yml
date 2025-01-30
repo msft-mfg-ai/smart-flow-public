@@ -87,7 +87,8 @@ jobs:
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
     outputs:
-      AI_HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
+      HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
+      HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
   
     # ------------------------------------------------------------------------------------------------------------------------
     # Actions

@@ -244,6 +244,9 @@ jobs:
       ENV_CODE: ${{ inputs.deployEnvironment }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       # DEPLOY_OUTPUTS: ${{ needs.deploy-bicep.outputs }} fails...
+      HUB_NAME:       ${{ needs.deploy-bicep.outputs.HUB_NAME }}
+      HUB_NAME_1:     ${{ needs.deploy-bicep.deploy.outputs.HUB_NAME }}
+      HUB_NAME_2:     ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_NAME }}
       HUB_ID_1:       ${{ needs.deploy-bicep.outputs.HUB_ID }}
       HUB_ID_2:       ${{ needs.deploy-bicep.deploy.outputs.HUB_ID }}
       HUB_ID:         ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_ID }}
