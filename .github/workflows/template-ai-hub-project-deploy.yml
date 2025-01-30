@@ -13,33 +13,22 @@ on:
       RESOURCE_GROUP:
         required: true
         type: string
-      # DEPLOY_OUTPUTS:
-      #   required: true
-      #   type: string
-      HUB_ID:
-        required: true
+      templatePath:
+        required: false
         type: string
-      HUB_ID_1:
-        required: true
+        default: 'infra/bicep/'
+      templateFile:
+        required: false
         type: string
-      HUB_ID_2:
-        required: true
+        default: 'main.bicep'
+      parameterFile:
+        required: false
         type: string
-      HUB_ID_3:
-        required: true
+        default: ''
+      parameterFileReplaceTokens:
+        required: false
         type: string
-      HUB_NAME:
-        required: true
-        type: string
-      HUB_NAME_1:
-        required: true
-        type: string
-      HUB_NAME_2:
-        required: true
-        type: string
-      HUB_NAME_3:
-        required: true
-        type: string
+        default: 'false'
       PROJECT_NAME:
         required: true
         type: string
@@ -51,20 +40,37 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.ENV_CODE }}
+    env:
+      envCode: ${{ inputs.envCode }}
+      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}
     steps:
-      - name: Display Variables and Files
+      - name: Get the current date
+        id: get-date
+        run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
+      - name: OIDC Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CICD_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Find Azure Resources
+        uses: azure/arm-deploy@v2
+        id: run-bicep
+        with:
+          scope: resourcegroup
+          region: ${{ vars.RESOURCEGROUP_LOCATION }}
+          resourceGroupName: ${{ inputs.RESOURCE_GROUP }}
+          deploymentName: ${{ inputs.templateFile }}-find-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          deploymentMode: Incremental
+
+      - name: Display Output
         run: |-
-          echo "inputs.ENV_CODE=${{ inputs.ENV_CODE }}"
-          echo "inputs.RESOURCE_GROUP=${{ inputs.RESOURCE_GROUP }}"
-          echo "inputs.HUB_ID=${{ inputs.HUB_ID }}"
-          echo "inputs.HUB_ID_1=${{ inputs.HUB_ID_1 }}"
-          echo "inputs.HUB_ID_2=${{ inputs.HUB_ID_2 }}"
-          echo "inputs.HUB_ID_3=${{ inputs.HUB_ID_3 }}"
-          echo "inputs.HUB_NAME=${{ inputs.HUB_NAME }}"
-          echo "inputs.HUB_NAME_1=${{ inputs.HUB_NAME_1 }}"
-          echo "inputs.HUB_NAME_2=${{ inputs.HUB_NAME_2 }}"
-          echo "inputs.HUB_NAME_3=${{ inputs.HUB_NAME_3 }}"
-          echo "inputs.PROJECT_NAME=${{ inputs.PROJECT_NAME }}"
+          echo "AI_HUB_ID=${{ steps.run-bicep.outputs.AI_HUB_ID }}"
+          echo "AI_HUB_NAME=${{ steps.run-bicep.outputs.AI_HUB_NAME }}"
 
           echo "---------------------------------"
           echo "##[group]All Variables:"
@@ -93,5 +99,5 @@ jobs:
           az ml workspace create \
             --kind project \
             --resource-group ${{ inputs.RESOURCE_GROUP }} \
-            --hub-id ${{ inputs.HUB_ID }} \
+            --hub-id ${{ steps.run-bicep.outputs.AI_HUB_ID }} \
             --name ${{ inputs.PROJECT_NAME }}

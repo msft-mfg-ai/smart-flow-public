@@ -240,19 +240,19 @@ jobs:
       - deploy-bicep
       - template-env
     secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+      pages: write
     with:
       ENV_CODE: ${{ inputs.deployEnvironment }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      # DEPLOY_OUTPUTS: ${{ needs.deploy-bicep.outputs }} fails...
-      HUB_NAME:       ${{ needs.deploy-bicep.outputs.HUB_NAME }}
-      HUB_NAME_1:     ${{ needs.deploy-bicep.deploy.outputs.HUB_NAME }}
-      HUB_NAME_2:     ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_NAME }}
-      HUB_NAME_3:     ${{ needs.deploy-bicep.steps.deploy.outputs.HUB_NAME }}
-      HUB_ID_1:       ${{ needs.deploy-bicep.outputs.HUB_ID }}
-      HUB_ID_2:       ${{ needs.deploy-bicep.deploy.outputs.HUB_ID }}
-      HUB_ID_3:       ${{ needs.deploy-bicep.steps.deploy.outputs.HUB_ID }}
-      HUB_ID:         ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_ID }}
       PROJECT_NAME:   ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
+      templatePath: './infra/bicep/'
+      templateFile: 'find-ai-hub-id.bicep'
+      parameterFile: 'find-ai-hub-id.gh.bicepparam'
+      parameterFileReplaceTokens: 'true'
 
   # # ------------------------------------------------------------------------------------------------------------------------
   # # Future use...!
