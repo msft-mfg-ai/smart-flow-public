@@ -2,8 +2,8 @@
 # Reusable Workflow: Deploying a Container App from a Registry
 # See https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects?tabs=azurecli
 # ------------------------------------------------------------------------------------------------------------------------
-name: z_template_deploy_ai_foundry_project
-run-name: Deploy AI Foundry Project
+name: z_template_deploy_ai_hub_project
+run-name: Deploy AI Hub Project
 on:
   workflow_call:
     inputs:
@@ -57,6 +57,7 @@ jobs:
 
       - name: Deploy AI Foundry Project
         run: |
+          az config set extension.dynamic_install_allow_preview=true          
           echo "az ml workspace create --kind project --resource-group ${{ inputs.RESOURCE_GROUP }} --hub-id ${{ inputs.HUB_ID }} --name ${{ inputs.PROJECT_NAME }}"
           az ml workspace create \
             --kind project \

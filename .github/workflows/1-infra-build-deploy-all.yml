@@ -230,19 +230,19 @@ jobs:
       PORT: ${{ needs.template-env.outputs.BATCH_PORT }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
-  deploy-foundry-project:
-    name: Deploy Foundry Project ${{ inputs.deployEnvironment }}
-    uses: ./.github/workflows/template-ai-foundry-project-deploy.yml
-    if: inputs.deployAIHub
-    needs:
-      - deploy-bicep
-      - template-env
-    secrets: inherit
-    with:
-      ENV_CODE: ${{ inputs.deployEnvironment }}
-      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      HUB_ID: ${{ needs.deploy-bicep.outputs.AI_HUB_ID }}
-      PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
+  # deploy-foundry-project:
+  #   name: Deploy Foundry Project ${{ inputs.deployEnvironment }}
+  #   uses: ./.github/workflows/template-ai-foundry-project-deploy.yml
+  #   if: inputs.deployAIHub
+  #   needs:
+  #     - deploy-bicep
+  #     - template-env
+  #   secrets: inherit
+  #   with:
+  #     ENV_CODE: ${{ inputs.deployEnvironment }}
+  #     RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+  #     HUB_ID: ${{ needs.deploy-bicep.outputs.AI_HUB_ID }}
+  #     PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
   # smoke-test:
