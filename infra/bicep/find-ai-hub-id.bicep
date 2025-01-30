@@ -1,6 +1,9 @@
 // --------------------------------------------------------------------------------------------------------------
 // Bicep file to locate an existing AI Hub by name
 // --------------------------------------------------------------------------------------------------------------
+// You can test it with these commands:
+//   az deployment group create -n find-hub --resource-group rg-ai-ll-sfpub-130-dev --template-file 'find-ai-hub-id.bicep' --parameters environmentName=dev applicationName=ll-sfpub-130
+// --------------------------------------------------------------------------------------------------------------
 
 targetScope = 'resourceGroup'
 
@@ -53,5 +56,5 @@ resource aiHubExisting 'Microsoft.MachineLearningServices/workspaces@2024-10-01'
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-output AI_HUB_ID string = aiHubExisting.id
-output AI_HUB_NAME string = aiHubExisting.name
+output id string = aiHubExisting.id
+output name string = aiHubExisting.name
