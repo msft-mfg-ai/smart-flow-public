@@ -159,6 +159,10 @@ jobs:
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
+      - name: Get the current date
+        id: get-date
+        run: echo "DTS=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
       - name: Deploy Azure Resources (Sub)
         uses: azure/arm-deploy@v2
         if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
@@ -166,7 +170,7 @@ jobs:
         with:
           scope: subscription
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}
+          deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DTS}}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
           deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
@@ -178,7 +182,7 @@ jobs:
         with:
           scope: resourcegroup
           region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}
+          deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DTS}}
           resourceGroupName: ${{ env.generatedResourceGroupName }}
           template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
           parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}

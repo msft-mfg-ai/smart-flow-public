@@ -230,8 +230,10 @@ jobs:
       PORT: ${{ needs.template-env.outputs.BATCH_PORT }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
-  # deploy-foundry-project:
-  #   name: Deploy Foundry Project ${{ inputs.deployEnvironment }}
+  # # Once I figure out how to get the resource id for the AI Hub as an output of the deploy-bicep step, I can uncomment this
+  # # ------------------------------------------------------------------------------------------------------------------------
+  # deploy-hub-project:
+  #   name: Deploy Hub Project ${{ inputs.deployEnvironment }}
   #   uses: ./.github/workflows/template-ai-hub-project-deploy.yml
   #   if: inputs.deployAIHub
   #   needs:
@@ -244,6 +246,8 @@ jobs:
   #     HUB_ID: ${{ needs.deploy-bicep.outputs.AI_HUB_ID }}
   #     PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
 
+  # # ------------------------------------------------------------------------------------------------------------------------
+  # # Future use...!
   # # ------------------------------------------------------------------------------------------------------------------------
   # smoke-test:
   #   name: Smoke Test
