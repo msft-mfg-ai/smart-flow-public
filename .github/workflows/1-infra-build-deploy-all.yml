@@ -232,7 +232,7 @@ jobs:
   # # ------------------------------------------------------------------------------------------------------------------------
   # deploy-foundry-project:
   #   name: Deploy Foundry Project ${{ inputs.deployEnvironment }}
-  #   uses: ./.github/workflows/template-ai-foundry-project-deploy.yml
+  #   uses: ./.github/workflows/template-ai-hub-project-deploy.yml
   #   if: inputs.deployAIHub
   #   needs:
   #     - deploy-bicep
