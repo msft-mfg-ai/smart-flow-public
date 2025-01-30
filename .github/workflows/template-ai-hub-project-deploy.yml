@@ -13,7 +13,16 @@ on:
       RESOURCE_GROUP:
         required: true
         type: string
+      DEPLOY_OUTPUTS:
+        required: true
+        type: string
       HUB_ID:
+        required: true
+        type: string
+      HUB_ID_1:
+        required: true
+        type: string
+      HUB_ID_2:
         required: true
         type: string
       PROJECT_NAME:
@@ -32,7 +41,10 @@ jobs:
         run: |-
           echo "inputs.ENV_CODE=${{ inputs.ENV_CODE }}"
           echo "inputs.RESOURCE_GROUP=${{ inputs.RESOURCE_GROUP }}"
+          echo "inputs.DEPLOY_OUTPUTS=${{ inputs.DEPLOY_OUTPUTS }}"
           echo "inputs.HUB_ID=${{ inputs.HUB_ID }}"
+          echo "inputs.HUB_ID_1=${{ inputs.HUB_ID_1 }}"
+          echo "inputs.HUB_ID_2=${{ inputs.HUB_ID_2 }}"
           echo "inputs.PROJECT_NAME=${{ inputs.PROJECT_NAME }}"
 
           echo "---------------------------------"

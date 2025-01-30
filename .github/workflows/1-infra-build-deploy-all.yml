@@ -243,8 +243,11 @@ jobs:
     with:
       ENV_CODE: ${{ inputs.deployEnvironment }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      HUB_ID: ${{ needs.deploy-bicep.deploy.outputs.AI_HUB_ID }}
-      PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
+      DEPLOY_OUTPUTS: ${{ needs.deploy-bicep.outputs }}
+      HUB_ID_1:       ${{ needs.deploy-bicep.outputs.HUB_ID }}
+      HUB_ID_2:       ${{ needs.deploy-bicep.deploy.outputs.HUB_ID }}
+      HUB_ID:         ${{ needs.deploy-bicep.jobs.deploy.outputs.HUB_ID }}
+      PROJECT_NAME:   ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
 
   # # ------------------------------------------------------------------------------------------------------------------------
   # # Future use...!
