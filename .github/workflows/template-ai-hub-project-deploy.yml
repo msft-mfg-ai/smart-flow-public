@@ -42,12 +42,52 @@ jobs:
       name: ${{ inputs.ENV_CODE }}
     env:
       envCode: ${{ inputs.envCode }}
-      generatedResourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.envCode }}
     steps:
       - name: Get the current date
         id: get-date
         run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
 
+      - name: Display Variables and Files
+        run: |-
+          echo "inputs.envCode=${{ inputs.envCode }}"
+          echo "inputs.RESOURCE_GROUP=${{ inputs.RESOURCE_GROUP }}"
+          echo "vars.APP_NAME=${{ vars.APP_NAME }}"
+          echo "templatePath=${{ inputs.templatePath }}"
+          echo "templateFile=${{ inputs.templateFile }}"
+          echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
+          echo "parameterFile=${{ inputs.parameterFile }}"
+          echo "parameterFilePath=$${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          echo "parameterFileReplaceTokens=${{ inputs.parameterFileReplaceTokens }}"
+          echo "---------------------------------"
+          echo "##[group]All Variables:"
+          echo "Environment:"
+          echo '${{ toJSON(env) }}'
+          echo "Variables:"
+          echo '${{ toJSON(vars) }}'
+          echo "Secrets:"
+          echo '${{ toJSON(secrets) }}'
+          echo "Inputs:"
+          echo '${{ toJSON(inputs) }}'
+          echo "##[endgroup]"
+          echo "---------------------------------"
+          echo "##[group]Directory of ${{ github.workspace  }}"
+          tree -R ${{ github.workspace  }}
+          echo "##[endgroup]"
+        continue-on-error: true
+
+      - name: Replace Tokens
+        if: ${{ inputs.runCreateInfra && inputs.parameterFileReplaceTokens == 'true' }}
+        uses: qetza/replacetokens-action@v1
+        with:
+          sources: '${{ inputs.templatePath }}${{ inputs.parameterFile }}; !local/ => ${{ inputs.parameterFile }}'
+          variables: '[${{ toJSON(env) }},${{ toJSON(vars) }},${{ toJSON(secrets) }}]' # use environment & variables & secrets
+
+      - name: Display Param File
+        run: |-
+          echo "##[group]Contents of ${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          cat ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          echo "##[endgroup]"
+        continue-on-error: true
       - name: OIDC Login to Azure
         uses: azure/login@v2
         with:
