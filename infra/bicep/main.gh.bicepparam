@@ -21,4 +21,4 @@ param deployAIHub = #{deployAIHub}#
 // param existing_ACR_Name = 'crxxxxxxx'
 // param existing_LogAnalytics_Name = 'logxxxxxx'
 // param existing_AppInsights_Name = 'appixxxxxx'
-param existing_managedAppEnv_Name = 'caenv-20250130T164456Z'
+param existing_managedAppEnv_Name = 'llsfpub129-cae-dev'
