@@ -43,6 +43,10 @@ jobs:
     env:
       envCode: ${{ inputs.envCode }}
     steps:
+      - name: Checkout Code
+        if: ${{ inputs.runCreateInfra }}
+        uses: actions/checkout@v4
+
       - name: Get the current date
         id: get-date
         run: echo "DATE_TIME_STAMP=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
@@ -95,6 +99,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # I need the actual Resource ID of the hub, and I can't seem to get it to pass through output variables... :(
+      # so - I'll call the bicep to locate the existing resource, then output the ID, then use that in my command...
       - name: Find Azure Resources
         uses: azure/arm-deploy@v2
         id: run-bicep
