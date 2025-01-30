@@ -233,7 +233,7 @@ jobs:
   # # Once I figure out how to get the resource id for the AI Hub as an output of the deploy-bicep step, I can uncomment this
   # # ------------------------------------------------------------------------------------------------------------------------
   deploy-hub-project:
-    name: Deploy Hub Project ${{ inputs.deployEnvironment }}
+    name: Deploy ${{ inputs.deployEnvironment }} Hub Project
     uses: ./.github/workflows/template-ai-hub-project-deploy.yml
     if: inputs.deployAIHub
     needs:
