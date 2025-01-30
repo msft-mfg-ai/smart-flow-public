@@ -103,8 +103,8 @@ param publicAccessEnabled bool = true
 param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
-@description('Should we run a script to dedupe the KeyVault secrets? (fails on private networks right now)')
-param deduplicateKVSecrets bool = false
+@description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
+param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
@@ -134,6 +134,9 @@ var commonTags = {
   Environment: environmentName
 }
 var tags = union(commonTags, azdTag)
+
+// Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
+var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
