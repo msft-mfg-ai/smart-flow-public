@@ -616,6 +616,7 @@ output ACR_URL string = containerRegistry.outputs.loginServer
 output AI_ENDPOINT string = openAI.outputs.endpoint
 output AI_HUB_ID string = aiHub.outputs.id
 output AI_HUB_NAME string = aiHub.outputs.name
+output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
 output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name

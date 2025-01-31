@@ -236,7 +236,7 @@ jobs:
   # # If I could figure out how to get the resource id for the AI Hub as an OUTPUT of the deploy-bicep step, this would be easy
   # # ------------------------------------------------------------------------------------------------------------------------
   deploy-hub-project:
-    name: Deploy ${{ inputs.deployEnvironment }} Hub Project
+    name: Deploy Hub Project ${{ inputs.deployEnvironment }}
     uses: ./.github/workflows/template-ai-hub-project-deploy.yml
     if: inputs.deployAIHub
     needs:
@@ -251,7 +251,6 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       resourceGroupName: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      projectName:   ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
       templatePath: './infra/bicep/'
       templateFile: 'find-ai-hub-id.bicep'
       parameterFile: 'find-ai-hub-id.gh.bicepparam'

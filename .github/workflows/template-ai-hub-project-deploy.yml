@@ -6,8 +6,7 @@
 #   You need the resource Id to deploy the project
 #   The hub is created in an earlier step with Bicep and I can't seem to get the output variables to pass through...
 #   So I'm recreating it with a simple Bicep file here
-# ------------------------------------------------------------------------------------------------------------------------
-#   I could also maybe do something like this if I had the name of the hub, but I don't have that either yet...
+#   I could maybe do something direct like this if I had the name of the hub, but I don't have that either yet...
 #     $myResourceId=(az resource list --name 'myapp-hub-dev' --query "[].id" -otsv)
 # ------------------------------------------------------------------------------------------------------------------------
 name: z_template_deploy_ai_hub_project
@@ -19,9 +18,6 @@ on:
         required: true
         type: string
       resourceGroupName:
-        required: true
-        type: string
-      projectName:
         required: true
         type: string
       templatePath:
@@ -44,7 +40,7 @@ on:
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   deploy:
-    name: Deploy Project ${{ inputs.envCode }} ${{ inputs.projectName }}
+    name: Deploy ${{ inputs.envCode }} Foundry Project 
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.envCode }}
@@ -69,21 +65,6 @@ jobs:
           echo "parameterFile=${{ inputs.parameterFile }}"
           echo "parameterFilePath=$${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "parameterFileReplaceTokens=${{ inputs.parameterFileReplaceTokens }}"
-          echo "---------------------------------"
-          echo "##[group]All Variables:"
-          echo "Environment:"
-          echo '${{ toJSON(env) }}'
-          echo "Variables:"
-          echo '${{ toJSON(vars) }}'
-          echo "Secrets:"
-          echo '${{ toJSON(secrets) }}'
-          echo "Inputs:"
-          echo '${{ toJSON(inputs) }}'
-          echo "##[endgroup]"
-          echo "---------------------------------"
-          echo "##[group]Directory of ${{ github.workspace  }}"
-          tree -R ${{ github.workspace  }}
-          echo "##[endgroup]"
         continue-on-error: true
 
       - name: Replace Tokens
@@ -124,6 +105,7 @@ jobs:
         run: |-
           echo "AI_HUB_ID=${{ steps.run-bicep.outputs.AI_HUB_ID }}"
           echo "AI_HUB_NAME=${{ steps.run-bicep.outputs.AI_HUB_NAME }}"
+          echo "AI_PROJECT_NAME=${{ steps.run-bicep.outputs.AI_PROJECT_NAME }}"
 
           echo "---------------------------------"
           echo "##[group]All Variables:"
@@ -148,9 +130,9 @@ jobs:
       - name: Deploy AI Foundry Project
         run: |
           az config set extension.dynamic_install_allow_preview=true          
-          echo "az ml workspace create --kind project --resource-group ${{ inputs.resourceGroupName }} --hub-id ${{ inputs.HUB_ID }} --name ${{ inputs.projectName }}"
+          echo "az ml workspace create --kind project --resource-group ${{ inputs.resourceGroupName }} --hub-id ${{ steps.run-bicep.outputs.AI_HUB_ID }} --name ${{ steps.run-bicep.outputs.AI_PROJECT_NAME }}"
           az ml workspace create \
             --kind project \
             --resource-group ${{ inputs.resourceGroupName }} \
             --hub-id ${{ steps.run-bicep.outputs.AI_HUB_ID }} \
-            --name ${{ inputs.projectName }}
+            --name ${{ steps.run-bicep.outputs.AI_PROJECT_NAME }}
