@@ -56,5 +56,5 @@ resource aiHubExisting 'Microsoft.MachineLearningServices/workspaces@2024-10-01'
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-output id string = aiHubExisting.id
-output name string = aiHubExisting.name
+output AI_HUB_ID string = aiHubExisting.id
+output AI_HUB_NAME string = aiHubExisting.name
