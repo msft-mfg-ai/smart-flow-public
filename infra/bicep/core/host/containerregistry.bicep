@@ -69,6 +69,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' =
 // --------------------------------------------------------------------------------------------------------------
 // Outputs
 // --------------------------------------------------------------------------------------------------------------
+output id string = useExistingResource ? existingContainerRegistry.id : newContainerRegistry.id
 output name string = useExistingResource ? existingContainerRegistry.name : newContainerRegistry.name
 output resourceGroupName string = useExistingResource ? existing_ACR_ResourceGroupName : resourceGroupName
 output loginServer string = useExistingResource ? existingContainerRegistry.properties.loginServer : newContainerRegistry.properties.loginServer

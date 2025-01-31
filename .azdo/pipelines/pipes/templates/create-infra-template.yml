@@ -21,6 +21,8 @@ parameters:
     default: false
   - name: createDnsZones
     default: true
+  - name: deployAIHub
+    default: true
   - name: addRoleAssignments
     default: true
 
@@ -48,6 +50,8 @@ jobs:
         value: '${{ lower(parameters.publicAccessEnabled) }}'
       - name: createDnsZones
         value: '${{ lower(parameters.createDnsZones) }}'
+      - name: deployAIHub
+        value: '${{ lower(parameters.deployAIHub) }}'
       - name: addRoleAssignments
         value: '${{ lower(parameters.addRoleAssignments) }}'
 
@@ -111,6 +115,8 @@ jobs:
           echo "parameters.publicAccessEnabled=${{ parameters.publicAccessEnabled }}"
           echo "createDnsZones=$(createDnsZones)"
           echo "parameters.createDnsZones=${{ parameters.createDnsZones }}"
+          echo "deployAIHub=$(deployAIHub)"
+          echo "parameters.deployAIHub=${{ parameters.deployAIHub }}"
           echo "addRoleAssignments=$(addRoleAssignments)"
           echo "parameters.addRoleAssignments=${{ parameters.addRoleAssignments }}"
 

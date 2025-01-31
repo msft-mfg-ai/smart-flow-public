@@ -43,6 +43,10 @@ parameters:
     displayName: Create DNS Zones?
     type: boolean
     default: true
+  - name: deployAIHub
+    displayName: Deploy AI Hub?
+    type: boolean
+    default: true
   - name: addRoleAssignments
     displayName: Add Role Assignments?
     type: boolean
@@ -97,6 +101,7 @@ stages:
       createResourceGroup: ${{ parameters.createResourceGroup }}
       publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
       createDnsZones: ${{ parameters.createDnsZones }}
+      deployAIHub: ${{ parameters.deployAIHub }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false
@@ -109,6 +114,7 @@ stages:
       createResourceGroup: ${{ parameters.createResourceGroup }}
       publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
       createDnsZones: ${{ parameters.createDnsZones }}
+      deployAIHub: ${{ parameters.deployAIHub }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false
@@ -123,7 +129,7 @@ stages:
         { containerAppName: 'api',   acrAppName: 'assistantapi',   projectFolderName: 'app/Assistant.Hub.Api',       port: '8080' }
       deployBatch: ${{ contains(parameters.apps, 'BATCH') }}
       batchConfig: 
-        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '80' }
+        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '8080' }
 
 # ----------------------------------------------------------------------------------------------------
 - ${{ if and(parameters.deployApps, contains(parameters.apps, 'API')) }}:
@@ -137,5 +143,5 @@ stages:
   - template: pipes/aca-deploy-pipe.yml
     parameters:
       apps: [ 
-        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '80' }
+        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '8080' }
       ] 

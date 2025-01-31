@@ -39,6 +39,10 @@ on:
         description: Create DNS Zones?
         type: boolean
         default: true
+      deployAIHub:
+        description: Deploy AI Hub?
+        type: boolean
+        default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
@@ -79,7 +83,7 @@ env:
 
   BATCH_APP_PATH: 'app/Assistant.Hub.Api.Batch'
   BATCH_ACR_APP_NAME: 'assistantbatch'
-  BATCH_PORT: '80'
+  BATCH_PORT: '8080'
   # activation is getting an error: The TargetPort 80 does not match the listening port 39581. The TargetPort 80 does not match any of the listening ports: [39581 4001 4001].
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -109,7 +113,7 @@ jobs:
       BATCH_APP_PATH: ${{ env.BATCH_APP_PATH }}
       BATCH_ACR_APP_NAME: ${{ env.BATCH_ACR_APP_NAME }}
       BATCH_PORT: ${{ env.BATCH_PORT }}
-
+      
     steps:
       - name: Set common environment variables
         id: set-env
@@ -163,6 +167,7 @@ jobs:
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
+      deployAIHub: ${{ inputs.deployAIHub }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
 
   # ------------------------------------------------------------------------------------------------------------------------
@@ -222,6 +227,32 @@ jobs:
       IMAGE_NAME: ${{ needs.build-all.outputs.BATCH_IMAGE_NAME }}
       PORT: ${{ needs.template-env.outputs.BATCH_PORT }}
 
+  # ------------------------------------------------------------------------------------------------------------------------
+  # Deploy a Project inside the AI Foundry Hub
+  # ------------------------------------------------------------------------------------------------------------------------
+  deploy-hub-project:
+    name: Deploy Hub Project ${{ inputs.deployEnvironment }}
+    uses: ./.github/workflows/template-ai-hub-project-deploy.yml
+    if: inputs.deployAIHub
+    needs:
+      - deploy-bicep
+      - template-env
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+      pages: write
+    with:
+      envCode: ${{ inputs.deployEnvironment }}
+      resourceGroupName: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+      templatePath: './infra/bicep/'
+      templateFile: 'find-ai-hub-id.bicep'
+      parameterFile: 'find-ai-hub-id.gh.bicepparam'
+      parameterFileReplaceTokens: 'true'
+
+  # # ------------------------------------------------------------------------------------------------------------------------
+  # # Future use...!
   # # ------------------------------------------------------------------------------------------------------------------------
   # smoke-test:
   #   name: Smoke Test

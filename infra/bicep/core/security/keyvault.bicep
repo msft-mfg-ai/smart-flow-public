@@ -24,7 +24,7 @@ param enabledForTemplateDeployment bool = true
 @description('Determines if this Key Vault can be used for Azure Disk Encryption.')
 param enabledForDiskEncryption bool = true
 @description('Determine if soft delete is enabled on this Key Vault.')
-param enableSoftDelete bool = false
+param enableSoftDelete bool = true
 @description('Determine if purge protection is enabled on this Key Vault.')
 param enablePurgeProtection bool = true
 @description('The number of days to retain soft deleted vaults and vault objects.')

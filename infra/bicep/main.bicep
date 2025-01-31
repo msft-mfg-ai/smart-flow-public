@@ -83,6 +83,12 @@ param existing_CogServices_Name string = ''
 param existing_CogServices_RG_Name string = ''
 
 // --------------------------------------------------------------------------------------------------------------
+// AI Hub Parameters
+// --------------------------------------------------------------------------------------------------------------
+@description('Should we deploy an AI Foundry Hub?')
+param deployAIHub bool = true
+
+// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 param apiImageName string = ''
@@ -97,8 +103,8 @@ param publicAccessEnabled bool = true
 param createDnsZones bool = true
 @description('Add Role Assignments for the user assigned identity?')
 param addRoleAssignments bool = true
-@description('Should we run a script to dedupe the KeyVault secrets? (fails on private networks right now)')
-param deduplicateKVSecrets bool = false
+@description('Should we run a script to dedupe the KeyVault secrets? (this fails on private networks right now)')
+param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
 
@@ -128,6 +134,9 @@ var commonTags = {
   Environment: environmentName
 }
 var tags = union(commonTags, azdTag)
+
+// Run a script to dedupe the KeyVault secrets -- this fails on private networks right now so turn if off for them
+var deduplicateKVSecrets = publicAccessEnabled ? deduplicateKeyVaultSecrets : false
 
 // --------------------------------------------------------------------------------------------------------------
 // -- Generate Resource Names -----------------------------------------------------------------------------------
@@ -436,6 +445,42 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
   ]
 }
 
+module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
+  name: 'aiHub${deploymentSuffix}'
+  params: {
+    aiHubName: resourceNames.outputs.aiHubName
+    location: location
+    tags: tags
+
+    // dependent resources
+    aiServicesId: openAI.outputs.id
+    aiServicesTarget: openAI.outputs.endpoint
+    applicationInsightsId: logAnalytics.outputs.applicationInsightsId
+    containerRegistryId: containerRegistry.outputs.id
+    keyVaultId: keyVault.outputs.id
+    storageAccountId: storage.outputs.id
+
+    // add data scientist role to user and application
+    addRoleAssignments: addRoleAssignments
+    userObjectId: principalId
+    userObjectType: 'User'
+    managedIdentityId: identity.outputs.managedIdentityPrincipalId
+    managedIdentityType: 'ServicePrincipal'
+  }
+}
+
+// This is not working right yet... can't find "az" modules...
+// module aiHubProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
+//   name: 'aiHubProject${deploymentSuffix}'
+//   params: {
+//     hubId: aiHub.outputs.id
+//     resourceGroupName: resourceGroupName
+//     projectName: resourceNames.outputs.aiHubProjectName
+//     location: location
+//     managedIdentityId: identity.outputs.managedIdentityId
+//   }
+// }
+
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
@@ -565,28 +610,32 @@ module containerAppBatch './core/host/containerappstub.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
+output SUBSCRIPTION_ID string = subscription().subscriptionId
+output ACR_NAME string = containerRegistry.outputs.name
+output ACR_URL string = containerRegistry.outputs.loginServer
+output AI_ENDPOINT string = openAI.outputs.endpoint
+output AI_HUB_ID string = aiHub.outputs.id
+output AI_HUB_NAME string = aiHub.outputs.name
+output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
+output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
+output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
+output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
+output API_KEY string = apiKeyValue
+output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
+output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+output AZURE_RESOURCE_GROUP string = resourceGroupName
+output COSMOS_CONTAINER_NAME string = uiChatContainerName
+output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
+output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
+output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
+output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
+output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
 output RESOURCE_TOKEN string = resourceToken
+output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
+output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
+output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
+output STORAGE_ACCOUNT_NAME string = storage.outputs.name
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
-output AZURE_RESOURCE_GROUP string = resourceGroupName
-output ACR_NAME string = containerRegistry.outputs.name
-output ACR_URL string = containerRegistry.outputs.loginServer
-output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
-output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
-output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output API_KEY string = apiKeyValue
-output STORAGE_ACCOUNT_NAME string = storage.outputs.name
-output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
-output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
-output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
-output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output AI_ENDPOINT string = openAI.outputs.endpoint
-output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
-output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
-output COSMOS_CONTAINER_NAME string = uiChatContainerName

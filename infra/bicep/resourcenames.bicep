@@ -33,6 +33,9 @@ output searchServiceName string           = toLower('${sanitizedAppName}-${resou
 output cogServiceName string              = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesAccounts}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output documentIntelligenceServiceName string = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesFormRecognizer}${sanitizedEnvironment}${resourceTokenWithDash}')
 
+output aiHubName string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-${sanitizedEnvironment}${resourceTokenWithDash}')
+output aiHubProjectName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedEnvironment}${resourceTokenWithDash}')
+
 output caManagedEnvName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}-${sanitizedEnvironment}${resourceToken}')
 // CA name must be lower case alpha or '-', must start and end with alpha, cannot have '--', length must be <= 32
 output containerAppAPIName string         = take(toLower('${sanitizedAppName}-${resourceAbbreviations.appContainerApps}-api-${sanitizedEnvironment}${resourceTokenWithDash}'), 32)

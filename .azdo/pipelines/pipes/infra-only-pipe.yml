@@ -15,6 +15,8 @@ parameters:
     default: true
   - name: createDnsZones
     default: true
+  - name: deployAIHub
+    default: true
   - name: addRoleAssignments
     default: true
   - name: runGHASScan
@@ -53,5 +55,6 @@ stages:
               createResourceGroup: ${{ parameters.createResourceGroup }}
               publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
               createDnsZones: ${{ parameters.createDnsZones }}
+              deployAIHub: ${{ parameters.deployAIHub }}
               addRoleAssignments: ${{ parameters.addRoleAssignments }}
               deploymentMode: ${{ parameters.deploymentMode }}

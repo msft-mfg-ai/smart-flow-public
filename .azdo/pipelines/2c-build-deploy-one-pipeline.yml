@@ -65,7 +65,7 @@ stages:
     parameters:
       pushToACR: ${{ parameters.pushApps }}
       apps: [ 
-        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '80' }
+        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '8080' }
       ] 
 
 # ----------------------------------------------------------------------------------------------------
@@ -80,5 +80,5 @@ stages:
   - template: pipes/aca-deploy-pipe.yml
     parameters:
       apps: [ 
-        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '80' }
+        { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '8080' }
       ] 
