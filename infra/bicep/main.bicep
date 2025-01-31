@@ -469,16 +469,17 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
   }
 }
 
-module aiHubProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
-  name: 'aiHubProject${deploymentSuffix}'
-  params: {
-    hubId: aiHub.outputs.id
-    resourceGroupName: resourceGroupName
-    projectName: resourceNames.outputs.aiHubProjectName
-    location: location
-    managedIdentityId: identity.outputs.managedIdentityId
-  }
-}
+// This is not working right yet... can't find "az" modules...
+// module aiHubProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
+//   name: 'aiHubProject${deploymentSuffix}'
+//   params: {
+//     hubId: aiHub.outputs.id
+//     resourceGroupName: resourceGroupName
+//     projectName: resourceNames.outputs.aiHubProjectName
+//     location: location
+//     managedIdentityId: identity.outputs.managedIdentityId
+//   }
+// }
 
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
