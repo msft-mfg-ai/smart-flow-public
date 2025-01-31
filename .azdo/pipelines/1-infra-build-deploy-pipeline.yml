@@ -145,3 +145,14 @@ stages:
       apps: [ 
         { containerAppName: 'batch', acrAppName: 'assistantbatch', projectFolderName: 'app/Assistant.Hub.Api.Batch', port: '8080' }
       ] 
+
+# ----------------------------------------------------------------------------------------------------
+- ${{ if parameters.deployAIHub }}:
+  - stage: DeployAIHubProject
+    displayName: Deploy AI Hub Project
+    jobs:
+    - template: pipes/templates/ai-foundry-project-deploy.yml
+      parameters:
+        environmentName: '${{ parameters.deployToEnvironment }}'
+        createResourceGroup: ${{ parameters.createResourceGroup }}
+        deployToResourceGroup: ${{ parameters.createResourceGroup }}

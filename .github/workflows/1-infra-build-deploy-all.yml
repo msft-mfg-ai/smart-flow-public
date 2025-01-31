@@ -246,10 +246,6 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       resourceGroupName: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      templatePath: './infra/bicep/'
-      templateFile: 'find-ai-hub-id.bicep'
-      parameterFile: 'find-ai-hub-id.gh.bicepparam'
-      parameterFileReplaceTokens: 'true'
 
   # # ------------------------------------------------------------------------------------------------------------------------
   # # Future use...!

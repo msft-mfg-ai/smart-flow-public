@@ -27,11 +27,11 @@ on:
       templateFile:
         required: false
         type: string
-        default: 'main.bicep'
+        default: 'find-ai-hub-id.bicep'
       parameterFile:
         required: false
         type: string
-        default: ''
+        default: 'find-ai-hub-id.gh.bicepparam'
       parameterFileReplaceTokens:
         required: false
         type: string
