@@ -20,14 +20,6 @@ on:
           - dev
           - qa
           - prod
-      AI_HUB_ID:
-        description: 'AI Hub Resource Id'
-        required: true
-        default: ''
-      AI_HUB_PROJECT_NAME:
-        description: 'AI Hub Project Name'
-        required: true
-        default: 'Smart-Flow-Project'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -35,33 +27,22 @@ permissions:
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
-  template-env:
-    # You can't pass environment variables to templates, so put them in outputs here that you CAN pass
-    name: Template Env Variables
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deployEnvironment }}
-    outputs:
-      RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}'
-      AI_HUB_ID: '${{ inputs.AI_HUB_ID }}'
-      AI_HUB_PROJECT_NAME: '${{ inputs.AI_HUB_PROJECT_NAME }}'
-      
-    steps:
-      - name: Display environment variables
-        id: set-env
-        run: |
-          echo "RESOURCE_GROUP_NAME: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}"
-          echo "inputs.AI_HUB_ID: ${{ inputs.AI_HUB_ID }}"
-          echo "inputs.AI_HUB_PROJECT_NAME: ${{ inputs.AI_HUB_PROJECT_NAME }}"
-
+  # ------------------------------------------------------------------------------------------------------------------------
+  # Deploy a Project inside the AI Foundry Hub
   # ------------------------------------------------------------------------------------------------------------------------
   deploy-hub-project:
     name: Deploy Hub Project ${{ inputs.deployEnvironment }}
     uses: ./.github/workflows/template-ai-hub-project-deploy.yml
-    needs:
-      - template-env
     secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+      pages: write
     with:
-      ENV_CODE: ${{ inputs.deployEnvironment }}
-      RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      HUB_ID: ${{ needs.template-env.outputs.AI_HUB_ID }}
-      PROJECT_NAME: ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
+      envCode: ${{ inputs.deployEnvironment }}
+      resourceGroupName: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}
+      templatePath: './infra/bicep/'
+      templateFile: 'find-ai-hub-id.bicep'
+      parameterFile: 'find-ai-hub-id.gh.bicepparam'
+      parameterFileReplaceTokens: 'true'
