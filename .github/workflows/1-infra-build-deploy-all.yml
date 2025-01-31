@@ -229,30 +229,33 @@ jobs:
       IMAGE_NAME: ${{ needs.build-all.outputs.BATCH_IMAGE_NAME }}
       PORT: ${{ needs.template-env.outputs.BATCH_PORT }}
 
-  # ------------------------------------------------------------------------------------------------------------------------
-  # Once I figure out how to get the resource id for the AI Hub as an output of the deploy-bicep step, this should work...
-  # ------------------------------------------------------------------------------------------------------------------------
-  deploy-hub-project:
-    name: Deploy ${{ inputs.deployEnvironment }} Hub Project
-    uses: ./.github/workflows/template-ai-hub-project-deploy.yml
-    if: inputs.deployAIHub
-    needs:
-      - deploy-bicep
-      - template-env
-    secrets: inherit
-    permissions:
-      id-token: write
-      contents: read
-      actions: read
-      pages: write
-    with:
-      envCode: ${{ inputs.deployEnvironment }}
-      resourceGroupName: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
-      projectName:   ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
-      templatePath: './infra/bicep/'
-      templateFile: 'find-ai-hub-id.bicep'
-      parameterFile: 'find-ai-hub-id.gh.bicepparam'
-      parameterFileReplaceTokens: 'true'
+  # # ------------------------------------------------------------------------------------------------------------------------
+  # # Note: Switching to do this in Bicep as that's better anyway
+  # # ------------------------------------------------------------------------------------------------------------------------
+  # # Note: this YML is not quite working yet... might be complete but not sure...
+  # # If I could figure out how to get the resource id for the AI Hub as an OUTPUT of the deploy-bicep step, this would be easy
+  # # ------------------------------------------------------------------------------------------------------------------------
+  # deploy-hub-project:
+  #   name: Deploy ${{ inputs.deployEnvironment }} Hub Project
+  #   uses: ./.github/workflows/template-ai-hub-project-deploy.yml
+  #   if: inputs.deployAIHub
+  #   needs:
+  #     - deploy-bicep
+  #     - template-env
+  #   secrets: inherit
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #     actions: read
+  #     pages: write
+  #   with:
+  #     envCode: ${{ inputs.deployEnvironment }}
+  #     resourceGroupName: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
+  #     projectName:   ${{ needs.template-env.outputs.AI_HUB_PROJECT_NAME }}
+  #     templatePath: './infra/bicep/'
+  #     templateFile: 'find-ai-hub-id.bicep'
+  #     parameterFile: 'find-ai-hub-id.gh.bicepparam'
+  #     parameterFileReplaceTokens: 'true'
 
   # # ------------------------------------------------------------------------------------------------------------------------
   # # Future use...!

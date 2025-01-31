@@ -32,7 +32,9 @@ output cosmosName string                  = toLower('${sanitizedAppName}-${resou
 output searchServiceName string           = toLower('${sanitizedAppName}-${resourceAbbreviations.searchSearchServices}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output cogServiceName string              = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesAccounts}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output documentIntelligenceServiceName string = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesFormRecognizer}${sanitizedEnvironment}${resourceTokenWithDash}')
+
 output aiHubName string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-${sanitizedEnvironment}${resourceTokenWithDash}')
+output aiHubProjectName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.cognitiveServicesHub}-Project-${sanitizedEnvironment}${resourceTokenWithDash}')
 
 output caManagedEnvName string            = toLower('${sanitizedAppName}-${resourceAbbreviations.appManagedEnvironments}-${sanitizedEnvironment}${resourceToken}')
 // CA name must be lower case alpha or '-', must start and end with alpha, cannot have '--', length must be <= 32

@@ -446,7 +446,7 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
 }
 
 module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
-  name: 'aihub${deploymentSuffix}'
+  name: 'aiHub${deploymentSuffix}'
   params: {
     aiHubName: resourceNames.outputs.aiHubName
     location: location
@@ -466,6 +466,17 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
     userObjectType: 'User'
     managedIdentityId: identity.outputs.managedIdentityPrincipalId
     managedIdentityType: 'ServicePrincipal'
+  }
+}
+
+module aiHubProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
+  name: 'aiHubProject${deploymentSuffix}'
+  params: {
+    hubId: aiHub.outputs.id
+    resourceGroupName: resourceGroupName
+    projectName: resourceNames.outputs.aiHubProjectName
+    location: location
+    managedIdentityId: identity.outputs.managedIdentityId
   }
 }
 
