@@ -39,7 +39,7 @@ on:
       parameterFileReplaceTokens:
         required: false
         type: string
-        default: 'false'
+        default: 'true'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
@@ -87,7 +87,7 @@ jobs:
         continue-on-error: true
 
       - name: Replace Tokens
-        if: ${{ inputs.runCreateInfra && inputs.parameterFileReplaceTokens == 'true' }}
+        if: ${{ inputs.parameterFileReplaceTokens == 'true' }}
         uses: qetza/replacetokens-action@v1
         with:
           sources: '${{ inputs.templatePath }}${{ inputs.parameterFile }}; !local/ => ${{ inputs.parameterFile }}'
