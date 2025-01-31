@@ -1,5 +1,7 @@
 // -----------------------------------------------------------------------------------------------
-// This BICEP file will create a project inside an AI Foundry using a Powershell Script
+// This BICEP file is supposed to  create a project inside an AI Foundry using a Powershell Script
+// However - it's failing because "az" is not installed...  
+// So - this is not being used yet...
 // -----------------------------------------------------------------------------------------------
 param hubId string = ''
 param resourceGroupName string = ''
