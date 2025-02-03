@@ -5,19 +5,10 @@
 
 version: 2
 updates:
-  - package-ecosystem: "devcontainers"
-    directory: "/"
-    schedule:
-      interval: "weekly"
   - package-ecosystem: "docker"
     directories:
-      - "/api_python"
       - "/app/Assistant.Hub.Api"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "pip"
-    directories:
-      - "/"
+      - "/app/Assistant.Hub.Batch"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
