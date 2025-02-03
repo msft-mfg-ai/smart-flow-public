@@ -8,7 +8,7 @@ updates:
   - package-ecosystem: "docker"
     directories:
       - "/app/Assistant.Hub.Api"
-      - "/app/Assistant.Hub.Batch"
+      - "/app/Assistant.Hub.Api.Batch"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
