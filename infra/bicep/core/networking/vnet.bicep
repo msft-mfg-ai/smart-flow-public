@@ -37,9 +37,20 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
         }
       }
       {
+        // The subnet of the managed environment must be delegated to the service 'Microsoft.App/environments'
         name: subnet2Name
         properties: {
           addressPrefix: subnet2Prefix
+          delegations: [ 
+            {
+              name: 'environments'
+              properties: {
+                serviceName: 'Microsoft.App/environments'
+              }
+              // id: 'string' // Resource ID.
+              // type: 'string' // Resource type.
+            } 
+          ] 
         }
       }
     ]

@@ -23,7 +23,7 @@ trigger:
 # ----------------------------------------------------------------------------------------------------
 parameters:
   - name: deployToEnvironment
-    displayName: Deploy To
+    displayName: 'Deploy To:'
     type: string
     values:
       - DEV
@@ -31,6 +31,10 @@ parameters:
       - PROD
       - DEV-PROD
     default: DEV
+  - name: parameterFileName
+    displayName: 'Bicep Parameter File:'
+    type: string
+    default: 'main.azdo.bicepparam'
   - name: createResourceGroup
     displayName: Create Resource Group?
     type: boolean
@@ -58,7 +62,7 @@ parameters:
       - API
       - BATCH
       - API-BATCH
-    default: 'API-BATCH'
+    default: 'API'
   - name: buildApps
     displayName: Build Docker Images
     type: boolean
@@ -97,11 +101,15 @@ stages:
   - template: pipes/infra-only-pipe.yml
     parameters:
       environments: ['${{ parameters.deployToEnvironment }}']
+      templateFolderName: 'infra/bicep'
+      templateFileName: 'main.bicep'
+      parameterFileName: ${{ parameters.parameterFileName }}
       singleEnvironment: 'true'
       createResourceGroup: ${{ parameters.createResourceGroup }}
       publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
       createDnsZones: ${{ parameters.createDnsZones }}
       deployAIHub: ${{ parameters.deployAIHub }}
+      deployBatchApp: ${{ contains(parameters.apps, 'BATCH') }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false
@@ -111,10 +119,14 @@ stages:
     dependsOn: ScanApplication
     parameters:
       environments: ['DEV', 'PROD']
+      templateFolderName: 'infra/bicep'
+      templateFileName: 'main.bicep'
+      parameterFileName: ${{ parameters.parameterFileName }}
       createResourceGroup: ${{ parameters.createResourceGroup }}
       publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
       createDnsZones: ${{ parameters.createDnsZones }}
       deployAIHub: ${{ parameters.deployAIHub }}
+      deployBatchApp: ${{ contains(parameters.apps, 'BATCH') }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false

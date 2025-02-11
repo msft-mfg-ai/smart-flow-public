@@ -43,6 +43,33 @@
       },
       "subnet2Name": {
         "value": "${SUBNET_APP_NAME}"
-      }      
+      },
+      "searchServiceSkuName": {
+        "value": "${AZURE_SEARCH_SERVICE_SKU=basic}"
+      },
+      "searchIndexName": {
+        "value": "${AZURE_SEARCH_INDEX=voicerag-intvect}"
+      },
+      "searchSemanticConfiguration":{
+        "value": "${AZURE_SEARCH_SEMANTIC_CONFIGURATION=default}"
+      },
+      "searchIdentifierField": {
+        "value": "${AZURE_SEARCH_IDENTIFIER_FIELD=chunk_id}"
+      },
+      "searchContentField": {
+        "value": "${AZURE_SEARCH_CONTENT_FIELD=chunk}"
+      },
+      "searchTitleField": {
+        "value": "${AZURE_SEARCH_TITLE_FIELD=title}"
+      },
+      "searchEmbeddingField": {
+        "value": "${AZURE_SEARCH_EMBEDDING_FIELD=text_vector}"
+      },
+      "searchUseVectorQuery": {
+        "value": "${AZURE_SEARCH_USE_VECTOR_QUERY=true}"
+      },
+      "searchServiceSemanticRankerLevel": {
+        "value": "${AZURE_SEARCH_SEMANTIC_RANKER=free}"
+      }
     }
   }
