@@ -7,6 +7,7 @@ param registryName string = ''
 param storageAccountName string = ''
 param aiSearchName string = ''
 param aiServicesName string = ''
+param aiProjectName string = ''
 param identityPrincipalId string
 @allowed(['ServicePrincipal', 'User'])
 param principalType string = 'ServicePrincipal'
@@ -16,6 +17,7 @@ var addRegistryRoles = !empty(registryName)
 var addStorageRoles = !empty(storageAccountName)
 var addSearchRoles = !empty(aiSearchName)
 var addCogServicesRoles = !empty(aiServicesName)
+var addAIProjectRoles = !empty(aiProjectName)
 
 resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = if (addRegistryRoles) {
   name: registryName
@@ -23,14 +25,20 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' ex
 resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' existing = if (addStorageRoles) {
   name: storageAccountName
 }
-resource aiService 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' existing = {
+resource aiService 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' existing = if (addCogServicesRoles) {
   name: aiServicesName
   scope: resourceGroup()
 }
-resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = {
+resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = if (addSearchRoles) {
   name: aiSearchName
   scope: resourceGroup()
 }
+
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = if (addAIProjectRoles){
+  name: aiProjectName
+  scope: resourceGroup()
+}
+
 
 resource registry_Role_AcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addRegistryRoles) {
   name: guid(registry.id, identityPrincipalId, roleDefinitions.containerregistry.acrPullRoleId)
@@ -134,5 +142,16 @@ resource search_Role_ServiceContributor 'Microsoft.Authorization/roleAssignments
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.search.serviceContributorRoleId)
     principalType: principalType
     description: 'Permission for ${principalType} ${identityPrincipalId} to be a search service contributor'
+  }
+}
+
+resource aiProject_Role_AzureAIDeveloper 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addAIProjectRoles) {
+  name: guid(aiProject.id, identityPrincipalId, roleDefinitions.openai.azureAIDeveloperRoleId)
+  scope: aiProject
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.azureAIDeveloperRoleId)
+    principalType: principalType
+    description: 'Permission for ${principalType} ${identityPrincipalId} to be an Azure AI Developer'
   }
 }

@@ -265,6 +265,7 @@ module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addR
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
+    aiProjectName: aiProject.outputs.name
   }
 }
 
@@ -277,6 +278,7 @@ module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRol
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
+    aiProjectName: aiProject.outputs.name
   }
 }
 

@@ -1,5 +1,11 @@
 // Creates an Azure AI resource with proxied endpoints for the Azure AI services provider
 
+// When using the Project - I get an error: 
+//   "your project does not have permission to access the connected Azure OpenAI resource because its connection is set to
+//    use role-based authentication. To resolve this issue, you can either assign the role of Azure AI Developer to your project 
+//    for the resource, or change the connection's authentication method to use an API key and try again. 
+
+
 @description('Azure region of the deployment')
 param location string
 
@@ -33,13 +39,11 @@ var resourceGroupName = resourceGroup().name
 
 var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
 
+// var storageConnections = ['${aiProjectName}/workspaceblobstore']
+// var aiSearchConnection = ['${acsConnectionName}']
+// var aiServiceConnections = ['${aoaiConnectionName}']
 
-/* var storageConnections = ['${aiProjectName}/workspaceblobstore']
-var aiSearchConnection = ['${acsConnectionName}']
-var aiServiceConnections = ['${aoaiConnectionName}'] */
-
-
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
   name: aiProjectName
   location: location
   tags: union(tags, {
@@ -91,8 +95,8 @@ resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   ]
 }
 
-output aiProjectName string = aiProject.name
-output aiProjectResourceId string = aiProject.id
-output aiProjectPrincipalId string = aiProject.identity.principalId
-output aiProjectWorkspaceId string = aiProject.properties.workspaceId
-output projectConnectionString string = aiProject.tags.ProjectConnectionString
+output name string = aiProject.name
+output id string = aiProject.id
+output principalId string = aiProject.identity.principalId
+output workspaceId string = aiProject.properties.workspaceId
+output connectionString string = aiProject.tags.ProjectConnectionString
