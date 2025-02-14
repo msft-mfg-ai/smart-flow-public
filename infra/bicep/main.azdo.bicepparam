@@ -17,6 +17,7 @@ param deployAIHub = #{deployAIHub}#
 param deployBatchApp = #{deployBatchApp}#
 
 // param existingVnetName = '#{appNameLowerNoDashes}#-vnet-dev'
+// param existingVnetResourceGroupName = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
 // param vnetPrefix = '10.2.0.0/16'
 // param subnet1Name = 'snet-prv-endpoint'
 // param subnet1Prefix = '10.2.0.64/26'
@@ -26,11 +27,19 @@ param deployBatchApp = #{deployBatchApp}#
 // param existing_ACR_Name = '#{appNameLowerNoDashes}#cr#{environmentNameLower}#'
 // param existing_ACR_ResourceGroupName = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
 
-// param existing_SearchService_Name = '#{appNameLowerNoDashes}#-srch-#{environmentNameLower}#'
 // param existing_CogServices_Name = '#{appNameLowerNoDashes}#-cog-#{environmentNameLower}#'
-// param existing_CogServices_RG_Name = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
+// param existing_CogServices_ResourceGroupName = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
+
+// param existing_SearchService_Name = '#{appNameLowerNoDashes}#-srch-#{environmentNameLower}#'
+// param existing_SearchService_ResourceGroupName = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
+
+// param existing_Cosmos_Name = '#{appNameLowerNoDashes}#-cosmos-#{environmentNameLower}#'
+// param existing_Cosmos_ResourceGroupName = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
+
+// param existing_KeyVault_Name = '#{appNameLowerNoDashes}#kv#{environmentNameLower}#'
+// param existing_KeyVault_ResourceGroupName = '#{resourceGroupPrefix}#-#{environmentNameLower}#'
 
 // param existing_LogAnalytics_Name = '#{appNameLowerNoDashes}#-log-#{environmentNameLower}#'
 // param existing_AppInsights_Name = '#{appNameLowerNoDashes}#-appi-#{environmentNameLower}#'
-// param existing_CosmosAccount_Name = '#{appNameLowerNoDashes}#-cosmos-#{environmentNameLower}#'
+
 // param existing_managedAppEnv_Name = '#{appNameLowerNoDashes}#-cae-#{environmentNameLower}#'

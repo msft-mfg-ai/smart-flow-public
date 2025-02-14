@@ -4,6 +4,7 @@
 // --------------------------------------------------------------------------------
 param keyVaultName string = ''
 param existingKeyVaultName string = ''
+param existingKeyVaultResourceGroupName string = ''
 param location string = resourceGroup().location
 param commonTags object = {}
 
@@ -104,6 +105,7 @@ var kvIpRules = keyVaultOwnerIpAddress == '' ? [] : [
 // --------------------------------------------------------------------------------
 resource existingKeyVaultResource 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = if (useExistingVault) {
   name: existingKeyVaultName
+  scope: resourceGroup(existingKeyVaultResourceGroupName)
 }
 resource keyVaultResource 'Microsoft.KeyVault/vaults@2021-11-01-preview' = if (!useExistingVault) {
   name: keyVaultName
@@ -223,6 +225,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExisting
 
 // --------------------------------------------------------------------------------
 output name string = useExistingVault ? existingKeyVaultResource.name : keyVaultResource.name
+output resourceGroupName string = useExistingVault ? existingKeyVaultResourceGroupName : resourceGroup().name
 output id string = useExistingVault ? existingKeyVaultResource.id : keyVaultResource.id
 output userManagedIdentityId string = useExistingVault ? '' : createUserAssignedIdentity ? userAssignedIdentity.id : ''
 output endpoint string = useExistingVault ? existingKeyVaultResource.properties.vaultUri : keyVaultResource.properties.vaultUri

@@ -50,12 +50,14 @@ param managedIdentityType string = 'ServicePrincipal'
 
 @description('Name AI Search resource')
 param aiSearchName string
+param aiSearchResourceGroupName string = resourceGroup().name
 
 var aiServiceConnectionName = '${aiHubName}-connection-AIService'
 var searchConnectionName  = '${aiHubName}-connection-AISearch'
 
 resource aiSearch 'Microsoft.Search/searchServices@2020-03-13' existing = {
   name: aiSearchName
+  scope: resourceGroup(aiSearchResourceGroupName)
 }
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {

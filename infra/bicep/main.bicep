@@ -41,6 +41,8 @@ param principalId string = ''
 // --------------------------------------------------------------------------------------------------------------
 @description('If you provide this is will be used instead of creating a new VNET')
 param existingVnetName string = ''
+@description('If you provide an existing VNET what resource group is it in?')
+param existingVnetResourceGroupName string = ''
 @description('If you provide this is will be used instead of creating a new VNET')
 param vnetPrefix string = '10.2.0.0/16'
 @description('If new VNET, this is the Subnet name for the private endpoints')
@@ -90,10 +92,13 @@ param containerAppEnvironmentWorkloadProfiles array = [
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of an existing Cognitive Services account to use')
 param existing_CogServices_Name string = ''
-@description('Name of ResourceGroup for an existing Cognitive Services account to use')
-param existing_CogServices_RG_Name string = ''
+@description('Resource Group where existing Cognitive Services account Lives')
+param existing_CogServices_ResourceGroupName string = ''
+
 @description('Name of an existing Search Services account to use')
 param existing_SearchService_Name string = ''
+@description('Resource Group where existing Search Services account Lives')
+param existing_SearchService_ResourceGroupName string = ''
 
 @description('Friendly name for your Azure AI resource')
 param aiProjectFriendlyName string = 'Agents Project resource'
@@ -104,7 +109,17 @@ param aiProjectDescription string = 'This is an example AI Project resource for 
 // Existing Cosmos resources?
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of an existing Cosmos account to use')
-param existing_CosmosAccount_Name string = ''
+param existing_Cosmos_Name string = ''
+@description('Resource Group where existing Cosmos account Lives')
+param existing_Cosmos_ResourceGroupName string = ''
+
+// --------------------------------------------------------------------------------------------------------------
+// Existing Key Vault?
+// --------------------------------------------------------------------------------------------------------------
+@description('Name of an existing Key Vault to use')
+param existing_KeyVault_Name string = ''
+@description('Resource Group where existing Key Vault Lives')
+param existing_KeyVault_ResourceGroupName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
@@ -184,6 +199,7 @@ module vnet './core/networking/vnet.bicep' = {
   params: {
     location: location
     existingVirtualNetworkName: existingVnetName
+    existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
     vnetAddressPrefix: vnetPrefix
     subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
@@ -261,11 +277,11 @@ module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addR
   name: 'identity-access${deploymentSuffix}'
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
     registryName: containerRegistry.outputs.name
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
-    aiProjectName: aiProject.outputs.name
   }
 }
 
@@ -278,7 +294,6 @@ module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRol
     storageAccountName: storage.outputs.name
     aiSearchName: searchService.outputs.name
     aiServicesName: openAI.outputs.name
-    aiProjectName: aiProject.outputs.name
   }
 }
 
@@ -288,6 +303,8 @@ module keyVault './core/security/keyvault.bicep' = {
     location: location
     commonTags: tags
     keyVaultName: resourceNames.outputs.keyVaultName
+    existingKeyVaultName: existing_KeyVault_Name
+    existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
     keyVaultOwnerUserId: principalId
     adminUserObjectIds: [identity.outputs.managedIdentityPrincipalId]
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
@@ -385,7 +402,8 @@ module cosmos './core/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
-    existingAccountName: existing_CosmosAccount_Name
+    existingAccountName: existing_Cosmos_Name
+    existingCosmosResourceGroupName: existing_Cosmos_ResourceGroupName
     databaseName: uiDatabaseName
     containerArray: cosmosContainerArray
     location: location
@@ -408,6 +426,7 @@ module searchService './core/search/search-services.bicep' = {
     location: location
     name: resourceNames.outputs.searchServiceName
     existingSearchServiceName: existing_SearchService_Name
+    existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
@@ -427,7 +446,7 @@ module openAI './core/ai/cognitive-services.bicep' = {
   params: {
     managedIdentityId: identity.outputs.managedIdentityId
     existing_CogServices_Name: existing_CogServices_Name
-    existing_CogServices_RG_Name: existing_CogServices_RG_Name
+    existing_CogServices_ResourceGroupName: existing_CogServices_ResourceGroupName
     name: resourceNames.outputs.cogServiceName
     location: openAI_deploy_location // this may be different than the other resources
     pe_location: location
@@ -464,7 +483,7 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
     existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
-    existing_CogServices_RG_Name: '' //existing_DocumentIntelligence_RG_Name
+    existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
     name: resourceNames.outputs.documentIntelligenceServiceName
     location: location // this may be different than the other resources
     tags: tags

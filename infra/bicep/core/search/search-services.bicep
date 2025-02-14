@@ -3,6 +3,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 param existingSearchServiceName string = ''
+param existingSearchServiceResourceGroupName string = resourceGroup().name
 
 param sku object = {
   name: 'standard'
@@ -37,6 +38,7 @@ var searchKeySecretName = 'search-key'
 // --------------------------------------------------------------------------------------------------------------
 resource existingSearchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = if (useExistingSearchService) {
   name: existingSearchServiceName
+  scope: resourceGroup(existingSearchServiceResourceGroupName)
 }
 
 resource search 'Microsoft.Search/searchServices@2024-06-01-preview' = if (!useExistingSearchService) {
@@ -91,9 +93,9 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExisting
 // Outputs
 // --------------------------------------------------------------------------------------------------------------
 output id string = useExistingSearchService ? existingSearchService.id : search.id
+output resourceGroupName string = useExistingSearchService ? existingSearchServiceResourceGroupName : resourceGroupName
 output name string = useExistingSearchService ? existingSearchService.name : search.name
 output endpoint string = useExistingSearchService ? 'https://${existingSearchServiceName}.search.windows.net/' : 'https://${name}.search.windows.net/'
-output resourceGroupName string = resourceGroupName
 output searchKeySecretName string = searchKeySecretName
 output keyVaultSecretName string = searchKeySecretName
 output privateEndpointId string = empty(privateEndpointSubnetId) ? '' : useExistingSearchService ? existingPrivateEndpoint.id : privateEndpoint.outputs.privateEndpointId

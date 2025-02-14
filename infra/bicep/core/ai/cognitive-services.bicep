@@ -1,5 +1,5 @@
 param existing_CogServices_Name string = ''
-param existing_CogServices_RG_Name string = ''
+param existing_CogServices_ResourceGroupName string = resourceGroup().name
 param name string = ''
 param location string = resourceGroup().location
 param pe_location string = location
@@ -64,8 +64,8 @@ var deployments = [
 
 // --------------------------------------------------------------------------------------------------------------
 resource existingAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (useExistingService) {
-  scope: resourceGroup(existing_CogServices_RG_Name)
   name: existing_CogServices_Name
+  scope: resourceGroup(existing_CogServices_ResourceGroupName)
 }
 
 // --------------------------------------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (empty(existi
 output id string = !empty(existing_CogServices_Name) ? existingAccount.id : account.id
 output name string = !empty(existing_CogServices_Name) ? existingAccount.name : account.name
 output endpoint string = !empty(existing_CogServices_Name) ? existingAccount.properties.endpoint : account.properties.endpoint
-output resourceGroupName string = !empty(existing_CogServices_Name) ? existing_CogServices_RG_Name : resourceGroupName
+output resourceGroupName string = !empty(existing_CogServices_Name) ? existing_CogServices_ResourceGroupName : resourceGroupName
 output cognitiveServicesKeySecretName string = cognitiveServicesKeySecretName
 output privateEndpointName string = privateEndpointName
 output textEmbedding object = textEmbedding

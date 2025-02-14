@@ -37,12 +37,14 @@ param aiServicesTarget string
 
 @description('Name AI Search resource')
 param aiSearchName string
+param aiSearchResourceGroupName string = resourceGroup().name
 
 var acsConnectionName = '${aiHubName}-connection-AISearch'
 var aoaiConnectionName  = '${aiHubName}-connection-AIServices_aoai'
 
 resource aisearch 'Microsoft.Search/searchServices@2020-03-13' existing = {
   name: aiSearchName
+  scope: resourceGroup(aiSearchResourceGroupName)
 }
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
