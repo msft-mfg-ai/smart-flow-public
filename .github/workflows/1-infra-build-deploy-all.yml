@@ -39,12 +39,12 @@ on:
         description: Create DNS Zones?
         type: boolean
         default: true
-      deployAIHub:
-        description: Deploy AI Hub?
-        type: boolean
-        default: true
       addRoleAssignments:
         description: Add Role Assignments?
+        type: boolean
+        default: true
+      deployAIHub:
+        description: Deploy AI Hub?
         type: boolean
         default: true
       runBuildDeployAPI:
@@ -55,7 +55,7 @@ on:
       runBuildDeployBatch:
         description: 'Build and Deploy Batch'
         required: false
-        default: true
+        default: false
         type: boolean
       runSecurityScan:
         description: 'Run Security Scan'
@@ -124,15 +124,12 @@ jobs:
           echo "vars.APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}"
           echo "AZURE_RESOURCE_GROUP: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}"
 
-          echo "CA_ENV_PREFIX: ${{ vars.CA_ENV_PREFIX }}"
           echo "ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}"
 
-          echo "CA_API_APP_PREFIX: ${{ vars.CA_API_APP_PREFIX }}"
           echo "API_APP_PATH: ${{ env.API_APP_PATH }}"
           echo "API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}"
           echo "API_PORT: ${{ env.API_PORT }}"
 
-          echo "CA_BATCH_APP_PREFIX: ${{ vars.CA_BATCH_APP_PREFIX }}"
           echo "BATCH_APP_PATH: ${{ env.BATCH_APP_PATH }}"
           echo "BATCH_ACR_APP_NAME: ${{ env.BATCH_ACR_APP_NAME }}"
           echo "BATCH_PORT: ${{ env.BATCH_PORT }}"
@@ -147,6 +144,7 @@ jobs:
       actions: read
       contents: write
       checks: write
+      security-events: write
 
   # ------------------------------------------------------------------------------------------------------------------------
   deploy-bicep:
@@ -168,6 +166,7 @@ jobs:
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
+      deployBatchApp: ${{ inputs.runBuildDeployBatch }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
 
   # ------------------------------------------------------------------------------------------------------------------------

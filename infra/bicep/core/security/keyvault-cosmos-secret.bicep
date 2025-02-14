@@ -4,9 +4,10 @@
 //     ONLY create if secretName is not in existingSecretNames list
 //     OR forceSecretCreation is true
 // --------------------------------------------------------------------------------
-param keyVaultName string = 'myKeyVault'
-param secretName string = 'mySecretName'
-param cosmosAccountName string = 'mycosmosname'
+param keyVaultName string
+param secretName string
+param cosmosAccountName string
+param cosmosAccountResourceGroup string = resourceGroup().name
 param enabledDate string = utcNow()
 param expirationDate string = dateTimeAdd(utcNow(), 'P2Y')
 param existingSecretNames string = ''
@@ -16,7 +17,10 @@ param forceSecretCreation bool = false
 var secretExists = contains(toLower(existingSecretNames), ';${toLower(trim(secretName))};')
 
 // --------------------------------------------------------------------------------
-resource cosmosResource 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' existing = { name: cosmosAccountName }
+resource cosmosResource 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' existing = {
+   name: cosmosAccountName
+  scope: resourceGroup(cosmosAccountResourceGroup)
+}
 var cosmosKey = cosmosResource.listKeys().primaryMasterKey
 // var cosmosConnectionString = 'AccountEndpoint=https://${cosmosAccountName}.documents.azure.com:443/;AccountKey=${cosmosKey}'
 

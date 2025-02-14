@@ -5,6 +5,12 @@ parameters:
   - name: environments
     type: object
     default: ['DEV']
+  - name: templateFolderName
+    default: 'infra/bicep'
+  - name: templateFileName
+    default: 'main.bicep'
+  - name: parameterFileName
+    default: 'main.azdo.bicepparam'
   - name: deploymentMode
     default: 'Incremental'
   - name: singleEnvironment
@@ -16,6 +22,8 @@ parameters:
   - name: createDnsZones
     default: true
   - name: deployAIHub
+    default: true
+  - name: deployBatchApp
     default: true
   - name: addRoleAssignments
     default: true
@@ -52,9 +60,13 @@ stages:
           - template: templates/create-infra-template.yml
             parameters:
               environmentName: ${{ environmentName }}
+              templateFolderName: ${{ parameters.templateFolderName }}
+              templateFileName: ${{ parameters.templateFileName }}
+              parameterFileName: ${{ parameters.parameterFileName }}
               createResourceGroup: ${{ parameters.createResourceGroup }}
               publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
               createDnsZones: ${{ parameters.createDnsZones }}
               deployAIHub: ${{ parameters.deployAIHub }}
+              deployBatchApp: ${{ parameters.deployBatchApp }}
               addRoleAssignments: ${{ parameters.addRoleAssignments }}
               deploymentMode: ${{ parameters.deploymentMode }}

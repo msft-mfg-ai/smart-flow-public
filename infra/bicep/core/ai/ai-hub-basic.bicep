@@ -35,6 +35,18 @@ param aiServicesId string
 @description('Target endpoint for the Azure AI Services resource to link to the Azure AI Hub.')
 param aiServicesTarget string
 
+@description('Name AI Search resource')
+param aiSearchName string
+param aiSearchResourceGroupName string = resourceGroup().name
+
+var acsConnectionName = '${aiHubName}-connection-AISearch'
+var aoaiConnectionName  = '${aiHubName}-connection-AIServices_aoai'
+
+resource aisearch 'Microsoft.Search/searchServices@2020-03-13' existing = {
+  name: aiSearchName
+  scope: resourceGroup(aiSearchResourceGroupName)
+}
+
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
   name: aiHubName
   location: location
@@ -56,18 +68,31 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
   }
 
   resource aiServicesConnection 'connections@2024-10-01' = {
-    name: '${aiHubName}-connection'
+    name: aoaiConnectionName
     properties: {
       category: 'AzureOpenAI'
       target: aiServicesTarget
-      authType: 'ApiKey'
+      authType: 'AAD'
       isSharedToAll: true
-      credentials: {
-        key: '${listKeys(aiServicesId, '2021-10-01').key1}'
-      }
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
+      }
+    }
+  }
+
+  resource hub_connection_azureai_search 'connections@2024-07-01-preview' = {
+    name: acsConnectionName
+    properties: {
+      category: 'CognitiveSearch'
+      target: 'https://${aiSearchName}.search.windows.net'
+      authType: 'AAD'
+      //useWorkspaceManagedIdentity: false
+      isSharedToAll: true
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: aisearch.id
+        location: aisearch.location
       }
     }
   }
@@ -75,3 +100,5 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
 
 output id string = aiHub.id
 output name string = aiHub.name
+output aoaiConnectionName string = aoaiConnectionName
+output acsConnectionName string = acsConnectionName

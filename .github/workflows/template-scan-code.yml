@@ -26,6 +26,9 @@ jobs:
     name: Security Scan
     runs-on: windows-latest
     permissions:
+      # required for all workflows
+      security-events: write   # needed to update the security sarif alerts
+      # only required for workflows in private repositories
       actions: read
       contents: write
       checks: write

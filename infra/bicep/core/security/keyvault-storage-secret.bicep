@@ -4,9 +4,10 @@
 //     ONLY create if secretName is not in existingSecretNames list
 //     OR forceSecretCreation is true
 // --------------------------------------------------------------------------------
-param keyVaultName string = 'myKeyVault'
-param secretName string = 'mySecretName'
-param storageAccountName string = 'myStorageAccountName'
+param keyVaultName string
+param secretName string
+param storageAccountName string
+param storageAccountResourceGroup string = resourceGroup().name
 param enabledDate string = utcNow()
 param expirationDate string = dateTimeAdd(utcNow(), 'P2Y')
 param existingSecretNames string = ''
@@ -16,7 +17,10 @@ param forceSecretCreation bool = false
 var secretExists = contains(toLower(existingSecretNames), ';${toLower(trim(secretName))};')
 
 // --------------------------------------------------------------------------------
-resource storageAccountResource 'Microsoft.Storage/storageAccounts@2021-04-01' existing = { name: storageAccountName }
+resource storageAccountResource 'Microsoft.Storage/storageAccounts@2021-04-01' existing = { 
+  name: storageAccountName 
+  scope: resourceGroup(storageAccountResourceGroup)
+}
 var accountKey = storageAccountResource.listKeys().keys[0].value
 var storageAccountConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccountResource.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${accountKey}'
 

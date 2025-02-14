@@ -9,6 +9,7 @@ param logAnalyticsWorkspaceName string
 param logAnalyticsRgName string
 param appSubnetId string = ''
 param publicAccessEnabled bool = true
+param containerAppEnvironmentWorkloadProfiles array
 
 // --------------------------------------------------------------------------------------------------------------
 var useExistingEnvironment = !empty(existingEnvironmentName)
@@ -45,6 +46,7 @@ resource newAppEnvironmentResource 'Microsoft.App/managedEnvironments@2024-03-01
       infrastructureSubnetId: appSubnetId
       internal: !publicAccessEnabled
     } : {}
+    workloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
 

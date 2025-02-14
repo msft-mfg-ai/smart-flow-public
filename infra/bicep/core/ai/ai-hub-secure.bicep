@@ -6,7 +6,7 @@
 param location string
 
 @description('Set of tags to apply to the Azure AI Hub.')
-param tags object
+param tags object = {}
 
 @description('Name for the Azure AI Hub resource.')
 param aiHubName string
@@ -42,17 +42,36 @@ param addRoleAssignments bool = true
 param userObjectId string = ''
 param userObjectType string = 'User'
 
-@description('The object ID of the application identity to be granted necessary role assignments to access the Azure AI Hub.')
-param managedIdentityId string = ''
+// @description('The object ID of the application identity to be granted necessary role assignments to access the Azure AI Hub.')
+// param managedIdentityResourceId string = ''
+@description('The principal ID of the application identity to be granted necessary role assignments to access the Azure AI Hub.')
+param managedIdentityPrincipalId string = ''
 param managedIdentityType string = 'ServicePrincipal'
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview' = {
+@description('Name AI Search resource')
+param aiSearchName string
+param aiSearchResourceGroupName string = resourceGroup().name
+
+var aiServiceConnectionName = '${aiHubName}-connection-AIService'
+var searchConnectionName  = '${aiHubName}-connection-AISearch'
+
+resource aiSearch 'Microsoft.Search/searchServices@2020-03-13' existing = {
+  name: aiSearchName
+  scope: resourceGroup(aiSearchResourceGroupName)
+}
+
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
   name: aiHubName
   location: location
   tags: tags
   kind: 'Hub'
   identity: {
     type: 'SystemAssigned'
+    // tried this but it keeps getting a 400 error with not other details...?
+    // type: 'UserAssigned'
+    // userAssignedIdentities: {
+    //   '${managedIdentityResourceId}': {}
+    // }
   }
   properties: {
     // organization
@@ -64,41 +83,36 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01-preview'
     storageAccount: storageAccountId
     applicationInsights: applicationInsightsId
     containerRegistry: containerRegistryId
-    systemDatastoresAuthMode: 'identity'
+    //systemDatastoresAuthMode: 'identity'
   }
 
-  resource aiServicesConnection 'connections@2024-10-01' = {
-    name: '${aiHubName}-connection'
+  resource aiHubAIServiceConnection 'connections@2024-10-01' = {
+    name: aiServiceConnectionName
     properties: {
       category: 'AzureOpenAI'
       target: aiServicesTarget
-      authType: 'ApiKey'
       isSharedToAll: true
-      credentials: {
-        key: '${listKeys(aiServicesId, '2021-10-01').key1}'
-      }
+      authType: 'AAD'
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
       }
     }
   }
-  
-  // This fails...
-  // resource aiServicesConnection 'connections@2024-04-01-preview' = {
-  //   name: '${aiHubName}-connection'
-  //   properties: {
-  //     category: 'OpenAI'        // Error: Unsupported authtype AAD for OpenAI (Code: ValidationError)
-  //     // category: 'AIServices' // Error: The associated account is of kind OpenAI. Please provide an account of kind AIServices. 
-  //     target: aiServicesTarget
-  //     authType: 'AAD'
-  //     isSharedToAll: true
-  //     metadata: {
-  //       ApiType: 'Azure'
-  //       ResourceId: aiServicesId
-  //     }
-  //   }
-  // }
+  resource aiHubSearchConnection 'connections@2024-07-01-preview' = {
+    name: searchConnectionName
+    properties: {
+      category: 'CognitiveSearch'
+      target: 'https://${aiSearchName}.search.windows.net'
+      isSharedToAll: true
+      authType: 'AAD'
+      metadata: {
+        ApiType: 'Azure'
+        ResourceId: aiSearch.id
+        location: aiSearch.location
+      }
+    }
+  }
 }
 
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
@@ -113,16 +127,18 @@ resource adminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }
 
-resource applicationAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addRoleAssignments && managedIdentityId != '') {
-  name: guid(aiHub.id, managedIdentityId, 'dataScientistRole')
+resource applicationAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addRoleAssignments && managedIdentityPrincipalId != '') {
+  name: guid(aiHub.id, managedIdentityPrincipalId, 'dataScientistRole')
   scope: aiHub
   properties: {
-    principalId: managedIdentityId
+    principalId: managedIdentityPrincipalId
     principalType: managedIdentityType
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRole)
-    description: 'Permission for application ${managedIdentityId} to use ${aiHubName}'
+    description: 'Permission for application ${managedIdentityPrincipalId} to use ${aiHubName}'
   }
 }
 
 output id string = aiHub.id
 output name string = aiHub.name
+output aiServiceConnectionName string = aiServiceConnectionName
+output searchConnectionName string = searchConnectionName
