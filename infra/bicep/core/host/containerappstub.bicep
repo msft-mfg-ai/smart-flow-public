@@ -5,6 +5,7 @@ param managedEnvironmentRg string
 param imageName string = ''
 param registryName string
 param userAssignedIdentityName string
+param workloadProfileName string
 
 @description('The target port for the container')
 param targetPort int = 80
@@ -44,76 +45,70 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   tags: tags
   identity: {
     type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${userIdentity.id}': {}
-    }
+    userAssignedIdentities: { '${userIdentity.id}': {} }
   }
   
   properties: {
-    environmentId: containerAppEnvironmentResource.id
+    managedEnvironmentId: containerAppEnvironmentResource.id
     configuration: {
       ingress: {
-        targetPort: targetPort
         external: true
+        targetPort: targetPort
+        transport: 'auto'
       }
-      secrets: [for secret in items(secrets): {
-        name: secret.key
-        identity: userIdentity.id
-        keyVaultUrl: secret.value
-      }]
       registries: [
         {
           identity: userIdentity.id
           server: '${registryName}.azurecr.io'
         }
       ]
+      secrets: [for secret in items(secrets): {
+        name: secret.key
+        identity: userIdentity.id
+        keyVaultUrl: secret.value
+      }]
     }
     template: {
-      scale: {
-        minReplicas: 1
-        maxReplicas: 10
-      }
       containers: [
         {
-          name: 'app'
+          name: workloadProfileName
           image: fetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-          resources: {
-              cpu: json('0.5')
-              memory: '1.0Gi'
-          }
           env: env
+          resources: {
+            cpu: json('0.5')
+            memory: '1.0Gi'
+          }
           probes: [
             {
-              type: 'startup'
+              type: 'Liveness'
               httpGet: {
-                path: '/health'
+                path: '/healthz/live'
                 port: targetPort
               }
-              initialDelaySeconds: 3
-              periodSeconds: 1
             }
             {
-              type: 'readiness'
+              type: 'Readiness'
               httpGet: {
-                path: '/ready'
+                path: '/healthz/ready'
                 port: targetPort
               }
-              initialDelaySeconds: 3
-              periodSeconds: 10
             }
             {
-              type: 'liveness'
+              type: 'Startup'
               httpGet: {
-                path: '/health'
+                path: '/healthz/startup'
                 port: targetPort
               }
-              initialDelaySeconds: 7
-              periodSeconds: 10
             }
           ]
         }
       ]
+      scale: {
+        minReplicas: 1
+        maxReplicas: 10
+      }
     }
+    workloadProfileName: workloadProfileName
   }
 }
 

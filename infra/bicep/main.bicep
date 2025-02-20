@@ -41,6 +41,8 @@ param principalId string = ''
 // --------------------------------------------------------------------------------------------------------------
 @description('If you provide this is will be used instead of creating a new VNET')
 param existingVnetName string = ''
+@description('If you provide an existing VNET what resource group is it in?')
+param existingVnetResourceGroupName string = ''
 @description('If you provide this is will be used instead of creating a new VNET')
 param vnetPrefix string = '10.2.0.0/16'
 @description('If new VNET, this is the Subnet name for the private endpoints')
@@ -73,14 +75,51 @@ param existing_AppInsights_Name string = ''
 // --------------------------------------------------------------------------------------------------------------
 @description('If you provide this is will be used instead of creating a new Container App Environment')
 param existing_managedAppEnv_Name string = ''
+@description('Name of the Container Apps Environment workload profile to use for the app')
+param appContainerAppEnvironmentWorkloadProfileName string = 'app'
+@description('Workload profiles for the Container Apps environment')
+param containerAppEnvironmentWorkloadProfiles array = [
+  {
+    name: 'app'
+    workloadProfileType: 'D4'
+    minimumCount: 1
+    maximumCount: 10
+  }
+]
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing OpenAI resources?
 // --------------------------------------------------------------------------------------------------------------
 @description('Name of an existing Cognitive Services account to use')
 param existing_CogServices_Name string = ''
-@description('Name of ResourceGroup for an existing Cognitive Services account to use')
-param existing_CogServices_RG_Name string = ''
+@description('Resource Group where existing Cognitive Services account Lives')
+param existing_CogServices_ResourceGroupName string = ''
+
+@description('Name of an existing Search Services account to use')
+param existing_SearchService_Name string = ''
+@description('Resource Group where existing Search Services account Lives')
+param existing_SearchService_ResourceGroupName string = ''
+
+@description('Friendly name for your Azure AI resource')
+param aiProjectFriendlyName string = 'Agents Project resource'
+@description('Description of your Azure AI resource displayed in AI studio')
+param aiProjectDescription string = 'This is an example AI Project resource for use in Azure AI Studio.'
+
+// --------------------------------------------------------------------------------------------------------------
+// Existing Cosmos resources?
+// --------------------------------------------------------------------------------------------------------------
+@description('Name of an existing Cosmos account to use')
+param existing_Cosmos_Name string = ''
+@description('Resource Group where existing Cosmos account Lives')
+param existing_Cosmos_ResourceGroupName string = ''
+
+// --------------------------------------------------------------------------------------------------------------
+// Existing Key Vault?
+// --------------------------------------------------------------------------------------------------------------
+@description('Name of an existing Key Vault to use')
+param existing_KeyVault_Name string = ''
+@description('Resource Group where existing Key Vault Lives')
+param existing_KeyVault_ResourceGroupName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // AI Hub Parameters
@@ -107,6 +146,8 @@ param addRoleAssignments bool = true
 param deduplicateKeyVaultSecrets bool = true
 @description('Set this if you want to append all the resource names with a unique token')
 param appendResourceTokens bool = false
+@description('Should batch container app be deployed?')
+param deployBatchApp bool = true
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -158,6 +199,7 @@ module vnet './core/networking/vnet.bicep' = {
   params: {
     location: location
     existingVirtualNetworkName: existingVnetName
+    existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
     vnetAddressPrefix: vnetPrefix
     subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
@@ -231,22 +273,27 @@ module identity './core/iam/identity.bicep' = {
     location: location
   }
 }
-module roleAssignments './core/iam/role-assignments.bicep' = if (addRoleAssignments) {
+module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addRoleAssignments) {
   name: 'identity-access${deploymentSuffix}'
   params: {
+    identityPrincipalId: identity.outputs.managedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
     registryName: containerRegistry.outputs.name
     storageAccountName: storage.outputs.name
-    identityPrincipalId: identity.outputs.managedIdentityPrincipalId
+    aiSearchName: searchService.outputs.name
+    aiServicesName: openAI.outputs.name
   }
 }
 
-module userRoleAssignments './core/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
+module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRoleAssignments && !empty(principalId)) {
   name: 'user-access${deploymentSuffix}'
   params: {
-    registryName: containerRegistry.outputs.name
-    storageAccountName: storage.outputs.name
     identityPrincipalId: principalId
     principalType: 'User'
+    registryName: containerRegistry.outputs.name
+    storageAccountName: storage.outputs.name
+    aiSearchName: searchService.outputs.name
+    aiServicesName: openAI.outputs.name
   }
 }
 
@@ -256,6 +303,8 @@ module keyVault './core/security/keyvault.bicep' = {
     location: location
     commonTags: tags
     keyVaultName: resourceNames.outputs.keyVaultName
+    existingKeyVaultName: existing_KeyVault_Name
+    existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
     keyVaultOwnerUserId: principalId
     adminUserObjectIds: [identity.outputs.managedIdentityPrincipalId]
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
@@ -353,6 +402,8 @@ module cosmos './core/database/cosmosdb.bicep' = {
   name: 'cosmos${deploymentSuffix}'
   params: {
     accountName: resourceNames.outputs.cosmosName
+    existingAccountName: existing_Cosmos_Name
+    existingCosmosResourceGroupName: existing_Cosmos_ResourceGroupName
     databaseName: uiDatabaseName
     containerArray: cosmosContainerArray
     location: location
@@ -374,6 +425,8 @@ module searchService './core/search/search-services.bicep' = {
   params: {
     location: location
     name: resourceNames.outputs.searchServiceName
+    existingSearchServiceName: existing_SearchService_Name
+    existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
@@ -393,7 +446,7 @@ module openAI './core/ai/cognitive-services.bicep' = {
   params: {
     managedIdentityId: identity.outputs.managedIdentityId
     existing_CogServices_Name: existing_CogServices_Name
-    existing_CogServices_RG_Name: existing_CogServices_RG_Name
+    existing_CogServices_ResourceGroupName: existing_CogServices_ResourceGroupName
     name: resourceNames.outputs.cogServiceName
     location: openAI_deploy_location // this may be different than the other resources
     pe_location: location
@@ -430,7 +483,7 @@ module documentIntelligence './core/ai/document-intelligence.bicep' = {
   name: 'doc-intelligence${deploymentSuffix}'
   params: {
     existing_CogServices_Name: '' //existing_DocumentIntelligence_Name
-    existing_CogServices_RG_Name: '' //existing_DocumentIntelligence_RG_Name
+    existing_CogServices_ResourceGroupName: '' //existing_DocumentIntelligence_RG_Name
     name: resourceNames.outputs.documentIntelligenceServiceName
     location: location // this may be different than the other resources
     tags: tags
@@ -455,6 +508,7 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
     // dependent resources
     aiServicesId: openAI.outputs.id
     aiServicesTarget: openAI.outputs.endpoint
+    aiSearchName: searchService.outputs.name
     applicationInsightsId: logAnalytics.outputs.applicationInsightsId
     containerRegistryId: containerRegistry.outputs.id
     keyVaultId: keyVault.outputs.id
@@ -464,22 +518,24 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
     addRoleAssignments: addRoleAssignments
     userObjectId: principalId
     userObjectType: 'User'
-    managedIdentityId: identity.outputs.managedIdentityPrincipalId
+    //managedIdentityResourceId: identity.outputs.managedIdentityId
+    managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
     managedIdentityType: 'ServicePrincipal'
   }
 }
 
-// This is not working right yet... can't find "az" modules...
-// module aiHubProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
-//   name: 'aiHubProject${deploymentSuffix}'
-//   params: {
-//     hubId: aiHub.outputs.id
-//     resourceGroupName: resourceGroupName
-//     projectName: resourceNames.outputs.aiHubProjectName
-//     location: location
-//     managedIdentityId: identity.outputs.managedIdentityId
-//   }
-// }
+module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
+  name: 'aiProject${deploymentSuffix}'
+  params: {
+    aiProjectName: resourceNames.outputs.aiHubProjectName
+    aiProjectFriendlyName: aiProjectFriendlyName
+    aiProjectDescription: aiProjectDescription
+    location: location
+    tags: tags
+    aiHubId: aiHub.outputs.id
+  }
+}
+
 
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
@@ -519,10 +575,11 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
     appSubnetId: vnet.outputs.subnet2ResourceId
     tags: tags
     publicAccessEnabled: publicAccessEnabled
+    containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
 
-// Applications use managed identity to access resources, keys are not needed but kept for reference
+// Applications use managed identity to access resources, keys are not needed but kept for future reference
 // var accessKeys = [
 //   { name: 'AOAIStandardServiceKey', secretRef: 'aikey' }
 //   { name: 'AzureDocumentIntelligenceKey', secretRef: 'docintellikey' }
@@ -530,12 +587,14 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
 //   { name: 'CosmosDbKey', secretRef: 'cosmos' }
 // ]
 
-var settings = [
+var apiTargetPort = 8080
+var apiSettings = [
   { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
   { name: 'AnalysisApiKey', secretRef: 'apikey' }
   { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
   { name: 'AOAIStandardChatGptDeployment', value: 'gpt-4o' }
   { name: 'ApiKey', secretRef: 'apikey' }
+  { name: 'PORT', value: '${apiTargetPort}' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
   { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
   { name: 'AzureDocumentIntelligenceEndpoint', value: documentIntelligence.outputs.endpoint }
@@ -551,8 +610,9 @@ module containerAppAPI './core/host/containerappstub.bicep' = {
     appName: resourceNames.outputs.containerAppAPIName
     managedEnvironmentName: managedEnvironment.outputs.name
     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
-    targetPort: 8080
+    targetPort: apiTargetPort
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
     imageName: apiImageName
@@ -565,19 +625,34 @@ module containerAppAPI './core/host/containerappstub.bicep' = {
       searchkey: searchSecret.outputs.secretUri
       apikey: apiKeySecret.outputs.secretUri
     }
-    env: settings
+    env: apiSettings
   }
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
-module containerAppBatch './core/host/containerappstub.bicep' = {
+var batchTargetPort = 8080
+var batchSettings = union(apiSettings, [
+  { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
+  // see: https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-configure-managed-identity
+  { name: 'AzureWebJobsStorage__accountName', value: storage.outputs.name }
+  { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
+  { name: 'AzureWebJobsStorage__clientId', value: identity.outputs.managedIdentityClientId }
+  { name: 'BatchAnalysisStorageAccountName', value: storage.outputs.name }
+  { name: 'BatchAnalysisStorageInputContainerName', value: storage.outputs.containerNames[1].name }
+  { name: 'BatchAnalysisStorageOutputContainerName', value: storage.outputs.containerNames[2].name }
+  { name: 'CosmosDbDatabaseName', value: cosmos.outputs.databaseName }
+  { name: 'CosmosDbContainerName', value: uiChatContainerName }
+  { name: 'MaxBatchSize', value: '10' }
+])
+module containerAppBatch './core/host/containerappstub.bicep' = if (deployBatchApp) {
   name: 'ca-batch-stub${deploymentSuffix}'
   params: {
     appName: resourceNames.outputs.containerAppBatchName
     managedEnvironmentName: managedEnvironment.outputs.name
     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
     registryName: resourceNames.outputs.ACR_Name
-    targetPort: 80
+    targetPort: batchTargetPort
     userAssignedIdentityName: identity.outputs.managedIdentityName
     location: location
     imageName: batchImageName
@@ -590,19 +665,7 @@ module containerAppBatch './core/host/containerappstub.bicep' = {
       searchkey: searchSecret.outputs.secretUri
       apikey: apiKeySecret.outputs.secretUri
     }
-    env: union(settings, [
-      { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
-      // see: https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-configure-managed-identity
-      { name: 'AzureWebJobsStorage__accountName', value: storage.outputs.name }
-      { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
-      { name: 'AzureWebJobsStorage__clientId', value: identity.outputs.managedIdentityClientId }
-      { name: 'BatchAnalysisStorageAccountName', value: storage.outputs.name }
-      { name: 'BatchAnalysisStorageInputContainerName', value: storage.outputs.containerNames[1].name }
-      { name: 'BatchAnalysisStorageOutputContainerName', value: storage.outputs.containerNames[2].name }
-      { name: 'CosmosDbDatabaseName', value: cosmos.outputs.databaseName }
-      { name: 'CosmosDbContainerName', value: uiChatContainerName }
-      { name: 'MaxBatchSize', value: '10' }
-    ])
+    env: batchSettings
   }
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
@@ -614,8 +677,8 @@ output SUBSCRIPTION_ID string = subscription().subscriptionId
 output ACR_NAME string = containerRegistry.outputs.name
 output ACR_URL string = containerRegistry.outputs.loginServer
 output AI_ENDPOINT string = openAI.outputs.endpoint
-output AI_HUB_ID string = aiHub.outputs.id
-output AI_HUB_NAME string = aiHub.outputs.name
+output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
+output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
 output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
 output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn

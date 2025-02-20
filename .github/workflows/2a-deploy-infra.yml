@@ -15,10 +15,6 @@ on:
           - dev
           - qa
           - prod
-      parameterFile:
-        description: 'Parameter File'
-        required: true
-        default: 'main.gh.bicepparam'
       deploymentMode:
         description: 'Bicep Deploy Mode'
         required: true
@@ -28,6 +24,10 @@ on:
           - Incremental
           - Validation
           - Complete
+      parameterFile:
+        description: 'Parameter File'
+        required: true
+        default: 'main.gh.bicepparam'
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
@@ -44,7 +44,21 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
-            
+      deployAIHub:
+        description: Deploy AI Hub?
+        type: boolean
+        default: true
+      runBuildDeployAPI:
+        description: 'Build and Deploy API'
+        required: false
+        default: true
+        type: boolean
+      runBuildDeployBatch:
+        description: 'Build and Deploy Batch'
+        required: false
+        default: false
+        type: boolean
+          
 jobs:
   Deploy_Bicep:
     name: Deploy ${{ inputs.deployEnvironment }} Bicep
@@ -65,4 +79,6 @@ jobs:
       createResourceGroup: ${{ inputs.createResourceGroup }}
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
+      deployAIHub: ${{ inputs.deployAIHub }}
+      deployBatchApp: ${{ inputs.runBuildDeployBatch }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}

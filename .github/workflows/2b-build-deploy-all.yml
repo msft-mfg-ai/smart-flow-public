@@ -31,7 +31,7 @@ on:
       runBuildDeployBatch:
         description: 'Build and Deploy Batch'
         required: false
-        default: true
+        default: false
         type: boolean
       runSecurityScan:
         description: 'Run Security Scan'
@@ -68,6 +68,7 @@ jobs:
     # You can't pass environment variables to templates, so put them in outputs here that you CAN pass
     name: Template Env Variables
     runs-on: ubuntu-latest
+    environment: ${{ inputs.deployEnvironment }}
     outputs:
       PROJECT_ROOT: ${{ github.workspace }}
       ENV_CODE: ${{ inputs.deployEnvironment }}
@@ -99,15 +100,12 @@ jobs:
           echo "vars.APP_NAME_NO_DASHES: ${{ vars.APP_NAME_NO_DASHES }}"
           echo "AZURE_RESOURCE_GROUP: ${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}"
 
-          echo "CA_ENV_PREFIX: ${{ vars.CA_ENV_PREFIX }}"
           echo "ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}"
 
-          echo "CA_API_APP_PREFIX: ${{ vars.CA_API_APP_PREFIX }}"
           echo "API_APP_PATH: ${{ env.API_APP_PATH }}"
           echo "API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}"
           echo "API_PORT: ${{ env.API_PORT }}"
 
-          echo "CA_BATCH_APP_PREFIX: ${{ vars.CA_BATCH_APP_PREFIX }}"
           echo "BATCH_APP_PATH: ${{ env.BATCH_APP_PATH }}"
           echo "BATCH_ACR_APP_NAME: ${{ env.BATCH_ACR_APP_NAME }}"
           echo "BATCH_PORT: ${{ env.BATCH_PORT }}"
@@ -122,6 +120,7 @@ jobs:
       actions: read
       contents: write
       checks: write
+      security-events: write
 
   # ------------------------------------------------------------------------------------------------------------------------
   build-all:

@@ -23,6 +23,8 @@ parameters:
     default: true
   - name: deployAIHub
     default: true
+  - name: deployBatchApp
+    default: true
   - name: addRoleAssignments
     default: true
 
@@ -52,6 +54,8 @@ jobs:
         value: '${{ lower(parameters.createDnsZones) }}'
       - name: deployAIHub
         value: '${{ lower(parameters.deployAIHub) }}'
+      - name: deployBatchApp
+        value: '${{ lower(parameters.deployBatchApp) }}'
       - name: addRoleAssignments
         value: '${{ lower(parameters.addRoleAssignments) }}'
 
@@ -70,53 +74,53 @@ jobs:
 
     # ----------------------------------------------------------------------------------------------------
     steps:
-      - bash: |
-          echo "appName=$(appName)"
-          appNameLower=$(echo "$(appName)" | tr '[:upper:]' '[:lower:]')
-          echo "appNameLower=$appNameLower"
-          echo "##vso[task.setvariable variable=appNameLower]$appNameLower"
-
-          echo "appPrefix=$(appPrefix)"
-          appPrefixLower=$(echo "$(appPrefix)" | tr '[:upper:]' '[:lower:]')
-          echo "appPrefixLower=$appPrefixLower"
-          echo "##vso[task.setvariable variable=appPrefixLower]$appPrefixLower"
-
-          echo "environmentName=$(environmentName)"
-          echo "environmentNameLower=$(environmentNameLower)"
-          echo "appNameLower=$appNameLower"
-
-          resourceGroupName=$(echo "$(resourceGroupPrefix)-$(environmentNameLower)" | tr '[:upper:]' '[:lower:]')
-          echo "resourceGroupName=$resourceGroupName"
-          echo "##vso[task.setvariable variable=resourceGroupName]$resourceGroupName"
-          
-          runDateTime=$(echo $(date '+%Y%m%d-%H%M%S'))
-          echo "##vso[task.setvariable variable=runDateTime]$runDateTime"
-          echo "runDateTime=$runDateTime"
-
-          runDateTimeZ=$(echo $(date '+%Y%m%dT%H%M%SZ'))
-          echo "##vso[task.setvariable variable=runDateTimeZ]$runDateTimeZ"
-          echo "runDateTimeZ=$runDateTimeZ"
-        displayName: 'Create Variables'
+      - task: PowerShell@2
+        name: createVariables
+        displayName: Create Variables
         continueOnError: true
+        inputs:
+          targetType: 'inline'
+          script: |
+            $environmentNameLower="${{ parameters.environmentName }}".ToLower()
+            echo "##vso[task.setvariable variable=environmentNameLower]$environmentNameLower"
+
+            $appNameLower="$(appName)".ToLower()
+            echo "##vso[task.setvariable variable=appNameLower]$appNameLower"
+
+            $appNameLowerNoDashes="$(appName)".ToLower().Replace("-", "")
+            echo "##vso[task.setvariable variable=appNameLowerNoDashes]$appNameLowerNoDashes"
+
+            $resourceGroupName="$(resourceGroupPrefix)-$environmentNameLower".ToLower()
+            echo "##vso[task.setvariable variable=resourceGroupName]$resourceGroupName"
+
+            $runDateTime=(Get-Date).ToString("yyyyMMdd-HHmmss")
+            echo "##vso[task.setvariable variable=runDateTime]$runDateTime"
+            $runDateTimeZ=(Get-Date).ToString("yyyyMMddTHHmmss")+"Z"
+            echo "##vso[task.setvariable variable=runDateTimeZ]$runDateTimeZ"
 
       - bash: |
           echo "environmentName=${{ parameters.environmentName }}"
           echo "templateFolderName=${{ parameters.templateFolderName }}"
           echo "templateFileName=${{ parameters.templateFileName }}"
+          echo "templateFile=$(templateFile)"
           echo "parameterFileName=${{ parameters.parameterFileName }}"
+          echo "parameterFile=$(parameterFile)"
           echo "deploymentMode=${{ parameters.deploymentMode }}"
           echo "resourceGroupName=$(resourceGroupName)"
           echo "appName=$(appName)"
           echo "appNameLower=$(appNameLower)"
-          echo "appPrefix=$(appPrefix)"
-          echo "appPrefixLower=$(appPrefixLower)"
+          echo "appNameLowerNoDashes=$(appNameLowerNoDashes)"
+          echo "runDateTime=$(runDateTime)"
+          echo "runDateTimeZ=$(runDateTimeZ)"
 
           echo "publicAccessEnabled=$(publicAccessEnabled)"
           echo "parameters.publicAccessEnabled=${{ parameters.publicAccessEnabled }}"
           echo "createDnsZones=$(createDnsZones)"
           echo "parameters.createDnsZones=${{ parameters.createDnsZones }}"
           echo "deployAIHub=$(deployAIHub)"
+          echo "deployBatchApp=$(deployBatchApp)"
           echo "parameters.deployAIHub=${{ parameters.deployAIHub }}"
+          echo "parameters.deployBatchApp=${{ parameters.deployBatchApp }}"
           echo "addRoleAssignments=$(addRoleAssignments)"
           echo "parameters.addRoleAssignments=${{ parameters.addRoleAssignments }}"
 

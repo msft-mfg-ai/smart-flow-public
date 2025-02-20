@@ -1,6 +1,7 @@
 param location string = resourceGroup().location
 
 param existingVirtualNetworkName string = ''
+param existingVnetResourceGroupName string = resourceGroup().name
 param newVirtualNetworkName string = ''
 param vnetAddressPrefix string
 param subnet1Name string
@@ -12,11 +13,19 @@ var useExistingResource = !empty(existingVirtualNetworkName)
 
 resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' existing = if (useExistingResource) {
   name: existingVirtualNetworkName
+  scope: resourceGroup(existingVnetResourceGroupName)
   resource subnet1 'subnets' existing = {
     name: subnet1Name
   }
   resource subnet2 'subnets' existing = {
     name: subnet2Name
+  }
+}
+module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource) {
+  name: 'nsg'
+  params: {
+    nsgName: '${newVirtualNetworkName}-${subnet2Name}-nsg-${location}'
+    location: location
   }
 }
 
@@ -37,9 +46,23 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
         }
       }
       {
+        // The subnet of the managed environment must be delegated to the service 'Microsoft.App/environments'
         name: subnet2Name
         properties: {
           addressPrefix: subnet2Prefix
+          networkSecurityGroup: {
+            id: appSubnetNSG.outputs.id
+          }
+          delegations: [ 
+            {
+              name: 'environments'
+              properties: {
+                serviceName: 'Microsoft.App/environments'
+              }
+              // id: 'string' // Resource ID.
+              // type: 'string' // Resource type.
+            } 
+          ] 
         }
       }
     ]

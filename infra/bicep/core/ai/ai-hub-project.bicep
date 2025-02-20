@@ -1,52 +1,98 @@
-// -----------------------------------------------------------------------------------------------
-// This BICEP file is supposed to  create a project inside an AI Foundry using a Powershell Script
-// However - it's failing because "az" is not installed...  
-// So - this is not being used yet...
-// -----------------------------------------------------------------------------------------------
-param hubId string = ''
-param resourceGroupName string = ''
-param projectName string = ''
-param managedIdentityId string = ''
+// Creates an Azure AI resource with proxied endpoints for the Azure AI services provider
 
-param location string = resourceGroup().location
-param utcValue string = utcNow()
+@description('Azure region of the deployment')
+param location string
 
-resource createAIHubProject 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  name: 'createAIHubProject'
+@description('Tags to add to the resources')
+param tags object
+
+@description('AI Project name')
+param aiProjectName string
+
+@description('AI Project display name')
+param aiProjectFriendlyName string = aiProjectName
+
+@description('AI Project description')
+param aiProjectDescription string
+
+@description('Resource ID of the AI Hub resource')
+param aiHubId string
+
+/* @description('Name for capabilityHost.')
+param capabilityHostName string 
+
+@description('Name for ACS connection.')
+param acsConnectionName string
+
+@description('Name for ACS connection.')
+param aoaiConnectionName string */
+
+//for constructing endpoint
+var subscriptionId = subscription().subscriptionId
+var resourceGroupName = resourceGroup().name
+
+var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
+
+
+/* var storageConnections = ['${aiProjectName}/workspaceblobstore']
+var aiSearchConnection = ['${acsConnectionName}']
+var aiServiceConnections = ['${aoaiConnectionName}'] */
+
+
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+  name: aiProjectName
   location: location
-  kind: 'AzurePowerShell'
+  tags: union(tags, {
+    ProjectConnectionString: projectConnectionString
+  })
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: { '${ managedIdentityId }': {} }
+    type: 'SystemAssigned'
   }
   properties: {
-    azPowerShellVersion: '8.1'
-    forceUpdateTag: utcValue
-    retentionInterval: 'PT1H'
-    timeout: 'PT5M'
-    cleanupPreference: 'Always' // cleanupPreference: 'OnSuccess' or 'Always'
-    arguments: ' -rgName ${resourceGroupName} -hubId ${hubId} -projectName ${projectName}'
-    scriptContent: '''
-      Param ([string] $resourceGroupName, [string] $hubId, [string] $projectName)
-      $startDate = Get-Date
-      $startTime = [System.Diagnostics.Stopwatch]::StartNew()
-      $message = ""
-      $message = "Creating project $($projectName) in hub $($hubId) in RG $($resourceGroupName)..."
-      az config set extension.dynamic_install_allow_preview=true          
-      az ml workspace create --kind project --resource-group $resourceGroupName --hub-id $hubId --name $projectName
-      $endDate = Get-Date
-      $endTime = $startTime.Elapsed;
-      $elapsedTime = "Script Elapsed Time: {0:HH:mm:ss}" -f ([datetime]$endTime.Ticks)
-      $elapsedTime += "; Start: {0:HH:mm:ss}" -f ([datetime]$startDate)
-      $elapsedTime += "; End: {0:HH:mm:ss}" -f ([datetime]$endDate)
-      Write-Output $message
-      Write-Output $elapsedTime
-      $DeploymentScriptOutputs = @{}
-      $DeploymentScriptOutputs['message'] = $message
-      $DeploymentScriptOutputs['elapsed'] = $elapsedTime
-      '''
+    // organization
+    friendlyName: aiProjectFriendlyName
+    description: aiProjectDescription
+
+    // dependent resources
+    hubResourceId: aiHubId
+  
   }
+  kind: 'project'
+
+  // Resource definition for the capability host
+  #disable-next-line BCP081
+/*   resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
+    name: '${aiProjectName}-${capabilityHostName}'
+    properties: {
+      capabilityHostKind: 'Agents'
+      aiServicesConnections: aiServiceConnections
+      vectorStoreConnections: aiSearchConnection
+      storageConnections: storageConnections
+    }
+  } */
 }
 
-output message string = createAIHubProject.properties.outputs.message
-output elapsed string = createAIHubProject.properties.outputs.elapsed
+resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  name: 'WaitForProjectDeployment'
+  location: location
+  kind: 'AzurePowerShell'
+  properties: {
+    azPowerShellVersion: '10.0'
+    scriptContent: '''
+      Write-Output "Starting wait script..."
+      Start-Sleep -Seconds 120  # Wait for 2 minutes
+      Write-Output "Wait completed. Proceeding with deployment..."
+    '''
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnSuccess'
+  }
+  dependsOn: [
+    aiProject
+  ]
+}
+
+output aiProjectName string = aiProject.name
+output aiProjectResourceId string = aiProject.id
+output aiProjectPrincipalId string = aiProject.identity.principalId
+output aiProjectWorkspaceId string = aiProject.properties.workspaceId
+output projectConnectionString string = aiProject.tags.ProjectConnectionString
