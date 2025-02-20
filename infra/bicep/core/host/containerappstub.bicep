@@ -75,8 +75,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           image: fetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           env: env
           resources: {
-            cpu: json('1.0')
-            memory: '2.0Gi'
+            cpu: json('0.5')
+            memory: '1.0Gi'
           }
           probes: [
             {
