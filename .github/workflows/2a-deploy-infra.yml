@@ -21,6 +21,7 @@ on:
           - piotr
           - chris
           - nick
+          - matt
       deploymentMode:
         description: 'Bicep Deploy Mode'
         required: true

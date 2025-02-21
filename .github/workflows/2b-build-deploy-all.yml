@@ -29,6 +29,7 @@ on:
           - piotr
           - chris
           - nick
+          - matt
       runBuildDeployAPI:
         description: 'Build and Deploy API'
         required: false

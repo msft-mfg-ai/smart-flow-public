@@ -28,6 +28,7 @@ on:
           - piotr
           - chris
           - nick
+          - matt
       parameterFile:
         description: 'Parameter File'
         required: true
