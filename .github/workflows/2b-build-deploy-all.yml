@@ -137,7 +137,7 @@ jobs:
       - template-env
     secrets: inherit
     with:
-      ENV_CODE: ${{ inputs.deployEnvironment }}
+      ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}
@@ -160,7 +160,7 @@ jobs:
       - template-env
     secrets: inherit
     with:
-      ENV_CODE: ${{ inputs.deployEnvironment }}
+      ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.API_APP_PATH }}
       CONTAINER_NAME: ${{ needs.template-env.outputs.API_CONTAINER_APP_NAME }}
@@ -178,7 +178,7 @@ jobs:
       - template-env
     secrets: inherit
     with:
-      ENV_CODE: ${{ inputs.deployEnvironment }}
+      ENV_CODE: ${{ needs.template-env.outputs.ENV_CODE }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       CONTAINER_APP_ENV_NAME: ${{ needs.build-all.outputs.BATCH_APP_PATH }}
       CONTAINER_NAME: ${{ needs.template-env.outputs.BATCH_CONTAINER_APP_NAME }}
