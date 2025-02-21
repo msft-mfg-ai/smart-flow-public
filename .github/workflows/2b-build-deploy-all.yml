@@ -158,7 +158,7 @@ jobs:
       CONTAINER_NAME: ${{ needs.template-env.outputs.API_CONTAINER_APP_NAME }}
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       IMAGE_NAME: ${{ needs.build-all.outputs.API_IMAGE_NAME }}
-      PORT: ${{ needs.template-env.outputs.UI_PORT }}
+      PORT: ${{ needs.template-env.outputs.API_PORT }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   deploy-batch:
