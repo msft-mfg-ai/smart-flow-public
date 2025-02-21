@@ -23,6 +23,11 @@ on:
           - dev
           - qa
           - prod
+          - lyle
+          - scott
+          - piotr
+          - chris
+          - nick
       runBuildDeployAPI:
         description: 'Build and Deploy API'
         required: false

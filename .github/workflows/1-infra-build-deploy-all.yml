@@ -23,6 +23,11 @@ on:
           - dev
           - qa
           - prod
+          - lyle
+          - scott
+          - piotr
+          - chris
+          - nick
       parameterFile:
         description: 'Parameter File'
         required: true

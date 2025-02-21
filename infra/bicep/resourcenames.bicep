@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 param applicationName string = ''
 
-@allowed(['azd','dev','demo','qa','stg','ct','prod'])
+// @allowed(['azd','dev','demo','qa','stg','ct','prod'])
 param environmentName string = 'dev'
 
 @description('Optional resource token to ensure uniqueness - leave blank if desired')

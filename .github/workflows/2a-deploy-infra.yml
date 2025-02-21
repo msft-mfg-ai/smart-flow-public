@@ -15,6 +15,11 @@ on:
           - dev
           - qa
           - prod
+          - lyle
+          - scott
+          - piotr
+          - chris
+          - nick
       deploymentMode:
         description: 'Bicep Deploy Mode'
         required: true

@@ -20,6 +20,11 @@ on:
           - dev
           - qa
           - prod
+          - lyle
+          - scott
+          - piotr
+          - chris
+          - nick
 
 permissions:
   id-token: write # This is required for requesting the JWT
