@@ -1,6 +1,7 @@
 [
   {
-    "Name": "prompt-embedded-file",
+    "Name": "auto-body-damage-analysis",
+    "Id": "AutoBodyDamageAdvisor",
     "Description": "For a given image, this agent provides a report describing the damage",
     "Format": "markdown",
     "Agents": [
@@ -13,20 +14,7 @@
     ]
   },
   {
-    "Name": "prompt-supplied-by-user",
-    "Description": "For a given image, this agent provides a report describing if the image meets guidelines supplied by user",
-    "Format": "markdown",
-    "Agents": [
-      {
-        "Name": "ColorReview",
-        "Type": "DynamicModelTask",
-        "SystemMessage": "request::SystemPrompt",
-        "UserMessage": "request::UserPrompt"
-      }
-    ]
-  },
-  {
-    "Name": "prompt-in-profile-json",
+    "Name": "image-review-inline-prompt",
     "Description": "For a given image, this agent provides a report describing if the image meets color-blindness guidelines",
     "Format": "markdown",
     "Agents": [
@@ -35,6 +23,19 @@
         "Type": "DynamicModelTask",
         "SystemMessage": "inline::You are a helpful assistant.",
         "UserMessage": "inline::Evaluate the proposed image for compliance with the Color Blind Association requirements.\n\nReview each requirement and provide a TRUE or FALSE tag for compliance. If non-compliant,\ndescribe why not.\n\nReturn results as a table.\n\n## COMPLIANCE REQUIREMENTS:\n\nThe image must meet the following criteria:\n\n(1) Colors that color-blind may confuse should not be close to each other on the image.\n(2) The image should not rely on color to convey information.\n(3) The image should use a color scheme that is color-blind friendly.\n"
+      }
+    ]
+  },
+  {
+    "Name": "image-review-request-prompt",
+    "Description": "For a given image, this agent provides a report describing if the image meets the guidelines supplied by user",
+    "Format": "markdown",
+    "Agents": [
+      {
+        "Name": "ImageAnalysis",
+        "Type": "DynamicModelTask",
+        "SystemMessage": "request::SystemPrompt",
+        "UserMessage": "request::UserPrompt"
       }
     ]
   }

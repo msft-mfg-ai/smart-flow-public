@@ -231,10 +231,10 @@ jobs:
         env:
           SUMMARY: |
             # Deployment summary
-            - Target Resource Group: ${{ env.generatedResourceGroupName }}
-            - Subscription Id: ${{ steps.deploy-bicep-rg.outputs.SUBSCRIPTION_ID }}
-            - Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-            - Hub Id: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
+            - Resource Group: ${{ env.generatedResourceGroupName }}
+            - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+            - API URL: [${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }})
+
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
         # - Link to App URL: [https://${{ steps.deploy-bicep-rg.outputs.hostName }}](https://${{ steps.deploy-bicep-rg.outputs.hostName }})

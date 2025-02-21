@@ -23,7 +23,7 @@ trigger:
 # ----------------------------------------------------------------------------------------------------
 parameters:
   - name: deployToEnvironment
-    displayName: 'Deploy To:'
+    displayName: Deploy To
     type: string
     values:
       - DEV

@@ -1,15 +1,22 @@
+//----------------------------------------------------------------------------------------------------
+// See Services/Profile/profiles.json for the API definitions
+//----------------------------------------------------------------------------------------------------
+// The prompts for this API are defined inline in the profile.json file 
+// This API analyzes the attached image for a color blindness compliant color palette
+//----------------------------------------------------------------------------------------------------
+// If you want to call the cloud API, change the URL and use an API key to authenticate. 
+// Look up the api key from the Key Vault and put this X-Api-Key line after the 'Content-Type:' line
+//----------------------------------------------------------------------------------------------------
+
 @baseUrl = https://localhost:7179
+// @baseUrl = https://YOUR-URL.azurecontainerapps.io
+// @apiKey = 
+// X-Api-Key: {{apiKey}}
 
-/// Prompt is supplied by the user in this example
-
-POST {{baseUrl}}/api/task/prompt-supplied-by-user
+POST {{baseUrl}}/api/task/image-review-inline-prompt
 Content-Type: application/json
 
 {
-  "Prompts":{
-      "SystemPrompt":"You are helpful assisant.",
-      "UserPrompt":"Evaluate the proposed image for compliance with the Color Blind Association requirements.\n\nReview each requirement and provide a TRUE or FALSE tag for compliance. If non-compliant,\ndescribe why not.\n\nReturn results as a table.\n\n## COMPLIANCE REQUIREMENTS:\n\nThe image must meet the following criteria:\n\n(1) Colors that color-blind may confuse should not be close to each other on the image.\n(2) The image should not rely on color to convey information.\n(3) The image should use a color scheme that is color-blind friendly.\n"
-    },
   "files": [
     {
       "Name": "Azure-portal.png",
