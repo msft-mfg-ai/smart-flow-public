@@ -48,6 +48,10 @@ on:
         required: false
         type: string
         default: 'TASK'
+      ENV_CODE:
+        required: true
+        type: string
+        default: 'DEV'
 
 # ------------------------------------------------------------------------------------------------------------------------
     outputs:
@@ -72,7 +76,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: ${{ inputs.ENV_CODE  }}
     outputs:
       IMAGE_VERSION: ${{ steps.image-name.outputs.IMAGE_VERSION }}
       API_IMAGE_NAME: ${{ steps.image-name.outputs.API_IMAGE_NAME }}

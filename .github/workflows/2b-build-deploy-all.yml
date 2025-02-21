@@ -136,6 +136,7 @@ jobs:
       - template-env
     secrets: inherit
     with:
+      ENV_CODE: ${{ inputs.deployEnvironment }}
       ACR_NAME: ${{ needs.template-env.outputs.ACR_NAME }}
       RESOURCE_GROUP: ${{ needs.template-env.outputs.RESOURCE_GROUP_NAME }}
       ACR_REPO_NAME: ${{ needs.template-env.outputs.ACR_REPO_NAME }}

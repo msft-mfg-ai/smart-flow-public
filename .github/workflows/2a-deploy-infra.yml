@@ -24,7 +24,7 @@ on:
       deploymentMode:
         description: 'Bicep Deploy Mode'
         required: true
-        default: 'dev'
+        default: 'Incremental'
         type: choice
         options:
           - Incremental
