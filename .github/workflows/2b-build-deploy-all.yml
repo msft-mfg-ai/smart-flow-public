@@ -5,6 +5,7 @@
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
 name: 2b - Build and Deploy All Apps
+run-name: 2b - Build and Deploy All Apps to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
   # push:

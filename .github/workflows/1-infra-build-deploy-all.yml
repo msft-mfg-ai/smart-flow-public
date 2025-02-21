@@ -5,7 +5,7 @@
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
 name: 1 - Deploy Infra, Build, Deploy All Apps
-run-name: 1 - Deploy Infra, Build, Deploy to ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+run-name: 1 - Deploy Infra, Build, Deploy to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 on:
   # push:
   #   branches:

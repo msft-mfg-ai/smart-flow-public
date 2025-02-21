@@ -2,6 +2,7 @@
 # Action: Deploy AI Hub Project
 # ------------------------------------------------------------------------------------------------------------------------
 name: 5 - Deploy AI Hub Project
+run-name: 5 - Deploy AI Hub Project to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
   # push:
