@@ -4,8 +4,8 @@
 # Note: in order to do multiple CA build/deploys, you need to change FW and login ONCE, otherwise
 # it tends to have token refresh issues and fail on the second and third app
 # ------------------------------------------------------------------------------------------------------------------------
-name: 2b - Build and Deploy All Apps
-run-name: 2b - Build and Deploy All Apps to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+name: 2b - Build and Deploy UI
+run-name: 2b - Build and Deploy UI to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
 
 on:
   # push:
