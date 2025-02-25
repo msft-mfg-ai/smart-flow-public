@@ -25,7 +25,7 @@ While developing this API, a Swagger interface and some simple REST Client API t
 
 This project uses Infrastructure as Code (IaC) to deploy and manage the Azure resources, utilizing [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview) to deploy Azure resources declaratively.
 
-Automated workflows are included in the project for [GitHub Actions](./.github/github_setup.md), [Azure DevOps Pipelines](./.azdo/pipelines/readme.md) or [azd up](./docs/azd_deploy.md) to deploy the resources. The workflows are designed to be multi-environment, allowing you to deploy to different environments (DEV/QA/PROD) with different configurations, secrets, permissions and approvals.
+Automated workflows are included in the project for [GitHub Actions](./.github/setup.md), [Azure DevOps Pipelines](./.azdo/pipelines/readme.md) or [azd up](./docs/azd_deploy.md) to deploy the resources. The workflows are designed to be multi-environment, allowing you to deploy to different environments (DEV/QA/PROD) with different configurations, secrets, permissions and approvals.
 
 In this initial demo, all deploys are triggered manually. Deploying to the QA and PROD environments could require approvals -- you will want to modify the workflows to suit your team's work standards.
 
