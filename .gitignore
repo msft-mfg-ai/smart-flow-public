@@ -408,6 +408,7 @@ app/Assistant.Hub.Batch/appsettings.Development.json
 infra/bicep/*.parameters.json
 !infra/bicep/main.parameters.json
 .vscode/settings.json
+.vscode/launch.json
 .azure
 infra/bicep/main-test.bicep
 app/Assistant.Hub.Api/api-cloud*.http

@@ -19,11 +19,11 @@ param aiSearchName string = ''
 // param aiSearchResourceGroupName string = resourceGroup().name
 param aiServicesName string = ''
 // param aiServicesResourceGroupName string = resourceGroup().name
+param cosmosName string = ''
+// param cosmosResourceGroupName string = resourceGroup().name
 
 // param aiHubName string = ''
 // // param aiHubResourceGroupName string = resourceGroup().name
-// param cosmosName string = ''
-// // param cosmosResourceGroupName string = resourceGroup().name
 
 // ----------------------------------------------------------------------------------------------------
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
@@ -31,9 +31,9 @@ var addRegistryRoles = !empty(registryName)
 var addStorageRoles = !empty(storageAccountName)
 var addSearchRoles = !empty(aiSearchName)
 var addCogServicesRoles = !empty(aiServicesName)
+var addCosmosRoles = !empty(cosmosName)
 
 // var addAIHubRoles = !empty(aiHubName)
-// var addCosmosRoles = !empty(cosmosName)
 
 // ----------------------------------------------------------------------------------------------------
 // Registry Roles
@@ -177,6 +177,24 @@ resource search_Role_ServiceContributor 'Microsoft.Authorization/roleAssignments
   }
 }
 
+// ----------------------------------------------------------------------------------------------------
+// Cosmos Database Roles
+// ----------------------------------------------------------------------------------------------------
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' existing = if (addCosmosRoles) {
+  name: cosmosName
+  //scope: resourceGroup(cosmosResourceGroupName)
+}
+
+resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (addCosmosRoles) {
+  name: guid(cosmosAccount.id, identityPrincipalId, roleDefinitions.cosmos.dataContributorRoleId)
+  parent: cosmosAccount
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: '${resourceGroup().id}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosAccount.name}/sqlRoleDefinitions/${roleDefinitions.cosmos.dataContributorRoleId}'
+    scope: cosmosAccount.id
+  }
+}
+
 // // ----------------------------------------------------------------------------------------------------
 // // AI Hub Roles
 // // ----------------------------------------------------------------------------------------------------
@@ -194,22 +212,3 @@ resource search_Role_ServiceContributor 'Microsoft.Authorization/roleAssignments
 //     description: 'Permission for ${principalType} ${identityPrincipalId} to be in Data Scientist Role'
 //   }
 // }
-
-// // ----------------------------------------------------------------------------------------------------
-// // Cosmos Database Roles
-// // ----------------------------------------------------------------------------------------------------
-// resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' existing = if (addCosmosRoles) {
-//   name: cosmosName
-//   //scope: resourceGroup(cosmosResourceGroupName)
-// }
-
-// resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (addCosmosRoles) {
-//   name: guid(cosmosAccount.id, identityPrincipalId, roleDefinitions.cosmos.dataContributorRoleId)
-//   parent: cosmosAccount
-//   properties: {
-//     principalId: identityPrincipalId
-//     roleDefinitionId: '${resourceGroup().id}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosAccount.name}/sqlRoleDefinitions/${roleDefinitions.cosmos.dataContributorRoleId}'
-//     scope: cosmosAccount.id
-//   }
-// }
-
