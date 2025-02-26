@@ -4,6 +4,8 @@
 variables:
   # - name: appName   (moved to variable group, or you can put it here if you prefer)
   #   value: 'this is unique to you - define in a variable group or on the pipeline variables!'
+  # - name: resourceGroupPrefix   (moved to variable group, or you can put it here if you prefer)
+  #   value: 'this is unique to your subscription - define in a variable group or on the pipeline variables!'
 
   - name: location
     value: 'eastus2'

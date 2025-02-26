@@ -8,7 +8,7 @@ Base Pipeline Definitions:
 - **[2a-deploy-infra-pipeline.yml](2a-deploy-infra-pipeline.yml):** Creates all of the Azure resources by deploying the [main.bicep](../../infra/bicep/main.bicep) template.
 - **[2b-build-deploy-all-pipeline.yml](2b-build-deploy-all-pipeline.yml):** Pipeline to build all apps in the app code folder, store the resulting images in the Azure Container Registry, then deploy to the Azure Container Apps environments.
   > Note: This pipeline pushes into the ACR created by the first pipeline. The service principal used to run this pipeline must have `acrpush` rights to the ACR, which will need to be added manually after the ACR is created in the Access Control page of the Container Registry.
-- **[2c-build-deploy-one-pipeline.yml](2b-build-deploy-one-pipeline.yml):** Pipeline to build the one set code in the app code folder, store the resulting image in the Azure Container Registry, then deploying it to the Azure Container Apps environment.
+- **[2c-build-deploy-one-pipeline.yml](2c-build-deploy-one-pipeline.yml):** Pipeline to build the one set code in the app code folder, store the resulting image in the Azure Container Registry, then deploying it to the Azure Container Apps environment.
   > Note: This pipeline pushes into the ACR created by the first pipeline. The service principal used to run this pipeline must have `acrpush` rights to the ACR, which will need to be added manually after the ACR is created in the Access Control page of the Container Registry.
 - **[3-build-pr-pipeline.yml](3-build-pr-pipeline.yml):** Runs each time a Pull Request is submitted and includes results in the PR
 - **[4-scan-pipeline.yml](4-scan-pipeline.yml):** Runs a periodic scan of the app for security vulnerabilities
@@ -46,18 +46,31 @@ To create this variable groups, customize and run this command in the Azure Clou
      --project='<yourAzDOProject>'
      --name AI.Doc.Review.Keys
      --variables
-         appName='<uniqueString>-ai-doc-review'
+         appName='<uniqueString>-smartflow'
+         resourceGroupPrefix='rg-smartflow'
          AdminIpAddress='<yourPublicIpAddress>'       (optional - if you want to get access to the KV and ACR)
          AdminPrincipalId='<yourAdminPrincipalId>'    (optional - if you want to get access to the KV and ACR)
 ```
 
+## Resource Group Name
+
+The Resource Group created will be `<resourceGroupPrefix>-<env>` and will be created in the `<location>` Azure region.  The `location` variable is defined in the [vars/var-common.yml](./vars/var-common.yml) file.  The `resourceGroupPrefix` variable could be defined in either the variable group or in the [var-common.yml](./vars/var-common.yml)  file.  
+
+If you want to use an existing Resource Group Name or change the format of the `generatedResourceGroupName` variable in the [create-infra-template.yml](./pipes/templates/create-infra-template.yml) file and also in the three aca-*template.yml files in the templates folder.
+
+Change the following line in those files to whatever you need it to be:
+
+```bash
+$resourceGroupName="$(resourceGroupPrefix)-$environmentNameLower".ToLower()
+```
+
 ## Create Service Connections and update the Service Connection Variable File
 
-The pipelines use unique Service Connection names for each environment (dev/qa/prod), and can be configured to be any name of your choosing. By default, they are set up to be a simple format of `<env> Service Connection`. Edit the [vars\var-service-connections.yml](./vars\var-service-connections.yml) file to match what you have set up as your service connections.
+The pipelines use unique Service Connection names for each environment (dev/qa/prod), and can be configured to be any name of your choosing. By default, they are set up to be a simple format of `<env> Service Connection`. Edit the [vars/var-service-connections.yml](./vars/var-service-connections.yml) file to match what you have set up as your service connections.
 
 See [Azure DevOps Service Connections](https://learn.microsoft.com/en-us/azure/devops/pipelines/library/connect-to-azure) for more info on how to set up service connections.
 
-```bash
+```yml
 - name: serviceConnectionName
   value: 'DEV Service Connection'
 - name: serviceConnectionDEV
@@ -70,7 +83,7 @@ See [Azure DevOps Service Connections](https://learn.microsoft.com/en-us/azure/d
 
 ## Update the Common Variables File with your settings
 
-Customize your deploy by editing the [vars\var-common.yml](./vars\var-common.yml) file. This file contains the following variables which you can change:
+Customize your deploy by editing the [vars/var-common.yml](./vars/var-common.yml) file. This file contains the following variables which you can change:
 
 ```bash
 - name: location
