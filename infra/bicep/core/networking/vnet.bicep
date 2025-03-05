@@ -6,14 +6,12 @@ param existingVnetResourceGroupName string = resourceGroup().name
 param newVirtualNetworkName string = ''
 param vnetAddressPrefix string
 
-@description('Ip Address to allow access to the Azure Search Service')
-param myIpAddress string = ''
-
 param subnet1Name string
 param subnet2Name string
 param subnet1Prefix string
 param subnet2Prefix string
 param otherSubnets object[] = []
+param networkSecurityGroupId string
 
 var useExistingResource = !empty(existingVirtualNetworkName)
 
@@ -27,26 +25,13 @@ resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' e
     name: subnet2Name
   }
 }
-module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource) {
-  name: 'nsg'
-  params: {
-    nsgName: '${newVirtualNetworkName}-${subnet2Name}-nsg-${location}'
-    location: location
-  }
-}
 
 var moreSubnets = [
   for subnet in otherSubnets: {
     name: subnet.name
     properties: union(
       subnet.properties,
-      !useExistingResource
-        ? {
-            networkSecurityGroup: {
-              id: nsg.id
-            }
-          }
-        : {}
+      !useExistingResource ? { networkSecurityGroup: { id: networkSecurityGroupId } } : {}
     )
   }
 ]
@@ -60,34 +45,41 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
         vnetAddressPrefix
       ]
     }
-    subnets: [
-      {
-        name: subnet1Name
-        properties: {
-          addressPrefix: subnet1Prefix
-        }
-      }
-      {
-        // The subnet of the managed environment must be delegated to the service 'Microsoft.App/environments'
-        name: subnet2Name
-        properties: {
-          addressPrefix: subnet2Prefix
-          networkSecurityGroup: {
-            id: appSubnetNSG.outputs.id
+    subnets: union(
+      [
+        {
+          name: subnet1Name
+          properties: {
+            addressPrefix: subnet1Prefix
+            networkSecurityGroup: {
+              id: networkSecurityGroupId
+            }
+            serviceEndpoints: [
+              { service: 'Microsoft.KeyVault', locations: [ location ]}
+              { service: 'Microsoft.Storage', locations: [ location ]}
+              { service: 'Microsoft.CognitiveServices', locations: [ modelLocation ]}
+            ]
           }
-          delegations: [ 
-            {
-              name: 'environments'
-              properties: {
-                serviceName: 'Microsoft.App/environments'
-              }
-              // id: 'string' // Resource ID.
-              // type: 'string' // Resource type.
-            } 
-          ] 
         }
-      }
-    ]
+        {
+          // The subnet of the managed environment must be delegated to the service 'Microsoft.App/environments'
+          name: subnet2Name
+          properties: {
+            addressPrefix: subnet2Prefix
+            networkSecurityGroup: {
+              id: networkSecurityGroupId
+            }
+            delegations: [ 
+              {
+                name: 'environments'
+                properties: { serviceName: 'Microsoft.App/environments' }
+              } 
+            ] 
+          }
+        }
+      ],
+      moreSubnets
+    )
   }
 
   resource subnet1 'subnets' existing = {

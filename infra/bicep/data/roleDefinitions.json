@@ -29,15 +29,15 @@
     "cognitiveServicesContributorRoleId": "25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68"
   },
   "ml": {
-    "dataScientistRole": "f6c7c914-8db3-469d-8ca1-694a8f32e121"
+    "dataScientistRoleId": "f6c7c914-8db3-469d-8ca1-694a8f32e121"
   },
   "containerregistry": {
     "acrPullRoleId": "7f951dda-4ed3-4680-a7ca-43fe172d538d"
   },
   "keyvault": {
-    "keyVaultContributorRoleId": "f25e0fa2-a7c8-4377-a976-54943a77a395",
-    "keyVaultSecretOfficerRoleId": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
-    "keyVaultAdministratorRoleId": "00482a5a-887f-4fb3-b363-3b7fe8e74483"
+    "contributorRoleId": "f25e0fa2-a7c8-4377-a976-54943a77a395",
+    "secretOfficerRoleId": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
+    "administratorRoleId": "00482a5a-887f-4fb3-b363-3b7fe8e74483"
   },
   "ai": {
     "administrator": "b78c5d69-af96-48a3-bf8d-a8b4d589de94"

@@ -1,3 +1,8 @@
+
+
+// LLL 03-05: close, but I still need to address the TODO items, and also evaluate ai-hub-secure.bicep, then test it as I haven't run this yet...!
+
+
 // --------------------------------------------------------------------------------------------------------------
 // Main bicep file that deploys EVERYTHING for the application, with optional parameters for existing resources.
 // --------------------------------------------------------------------------------------------------------------
@@ -140,6 +145,9 @@ param searchServiceSkuName string = 'basic'
 param apiImageName string = ''
 param batchImageName string = ''
 
+param uiContainerRegistry string = 'ghcr.io'
+param uiImageName string = '/msft-mfg-ai/smart-flow-ui/smartflowui:latest'
+
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
 // --------------------------------------------------------------------------------------------------------------
@@ -201,6 +209,16 @@ module resourceNames 'resourcenames.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- VNET ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
+module appSubnetNSG './core/networking/network-security-group.bicep' = {
+  name: 'nsg'
+  params: {
+    existingVnetName: existingVnetName
+    nsgName: '${resourceNames.outputs.vnet_Name}-${subnet2Name}-nsg-${location}'
+    location: location
+    myIpAddress: myIpAddress
+  }
+}
+
 module vnet './core/networking/vnet.bicep' = {
   name: 'vnet${deploymentSuffix}'
   params: {
@@ -208,7 +226,7 @@ module vnet './core/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
-    myIpAddress: myIpAddress
+    networkSecurityGroupId: appSubnetNSG.outputs.id
     vnetAddressPrefix: vnetPrefix
     subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
     subnet1Prefix: subnet1Prefix
@@ -329,6 +347,7 @@ module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addR
   params: {
     identityPrincipalId: identity.outputs.managedIdentityPrincipalId
     principalType: 'ServicePrincipal'
+    grantRolesAtResourceGroupLevel: false
     registryName: containerRegistry.outputs.name
     storageAccountName: storage.outputs.name
     keyvaultName: keyVault.outputs.name
@@ -482,7 +501,7 @@ module cosmos './core/database/cosmosdb.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Cognitive Services Resources ------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-var actualSearchServiceSemanticRankerLevel = (searchServiceSkuName == 'free') ? 'disabled' : searchServiceSemanticRankerLevel
+var actualSearchServiceSemanticRankerLevel = (searchServiceSkuName == 'free') ? 'disabled' : 'standard'
 module searchService './core/search/search-services.bicep' = {
   name: 'search${deploymentSuffix}'
   params: {
@@ -608,11 +627,14 @@ module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
     tags: tags
     aiHubId: aiHub.outputs.id
     // dependent resources
-    capabilityHostName: capabilityHostName
-
-    acsConnectionName: aiHub.outputs.acsConnectionName
-    aoaiConnectionName: aiHub.outputs.aoaiConnectionName
-    hubIdentityResourceId: identity.outputs.managedIdentityId
+    // TODO:  capabilityHostName: capabilityHostName
+    // TODO:  acsConnectionName: aiHub.outputs.acsConnectionName
+    // TODO:  aoaiConnectionName: aiHub.outputs.aoaiConnectionName
+    // TODO:  hubIdentityResourceId: identity.outputs.managedIdentityId
+    capabilityHostName: ''
+    acsConnectionName: ''
+    aoaiConnectionName: ''
+    hubIdentityResourceId: ''
   }
 }
 
@@ -635,7 +657,9 @@ module allDnsZones './core/networking/all-zones.bicep' = if (createDnsZones) {
     storageQueuePrivateEndpointName: storage.outputs.privateEndpointQueueName
     storageTablePrivateEndpointName: storage.outputs.privateEndpointTableName
     appInsightsPrivateEndpointName: logAnalytics.outputs.privateEndpointName
-    hubPrivateEndpointName: aiHub.outputs.privateEndpointName
+    
+    // TODO: hubPrivateEndpointName: aiHub.outputs.privateEndpointName
+    hubPrivateEndpointName: ''
 
     defaultAcaDomain: managedEnvironment.outputs.defaultDomain
     acaStaticIp: managedEnvironment.outputs.staticIp
@@ -656,8 +680,8 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
     appSubnetId: vnet.outputs.subnet2ResourceId
     tags: tags
     publicAccessEnabled: publicAccessEnabled
-    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
-    privateEndpointName: 'pe-${resourceNames.outputs.caManagedEnvName}'
+    // TODO: privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    // TODO: privateEndpointName: 'pe-${resourceNames.outputs.caManagedEnvName}'
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
@@ -754,12 +778,10 @@ module containerAppBatch './core/host/containerappstub.bicep' = if (deployBatchA
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
-var ui_settings = union(settings, [
+var uiSettings = union(apiSettings, [
   { name: 'AOAIEmbeddingsDeployment', value: 'text-embedding' }
-  { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
-  // "AzureSearchIndexName": "vector-<value>-indexer",
   { name: 'AzureSearchServiceEndpoint', value: searchService.outputs.endpoint }
-  // { name: 'StorageAccountName', value: storageAccount.outputs.name }
+  { name: 'StorageAccountName', value: storage.outputs.name }
   { name: 'AzureStorageAccountEndPoint', value: 'https://${storage.outputs.name}.blob.${environment().suffixes.storage}' }
   { name: 'AzureStorageUserUploadContainer', value: 'content' }
   { name: 'CosmosDbDatabaseName', value: 'ChatHistory' }
@@ -771,6 +793,7 @@ var ui_settings = union(settings, [
   { name: 'ShowFileUploadSelection', value: 'true' }
   { name: 'UseManagedIdentityResourceAccess', value: 'true' }
   { name: 'UserAssignedManagedIdentityClientId', value: identity.outputs.managedIdentityClientId }
+  // "AzureSearchIndexName": "vector-<value>-indexer",
 ])
 
 module ui_app './core/host/containerappstub.bicep' = {
@@ -781,11 +804,12 @@ module ui_app './core/host/containerappstub.bicep' = {
     location: location
     managedEnvironmentName: managedEnvironment.outputs.name
     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
-    registryName: containerRegistry.outputs.name
+    workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
+    registryName: uiContainerRegistry
     imageName: uiImageName
     userAssignedIdentityName: identity.outputs.managedIdentityName
     deploymentSuffix: deploymentSuffix
-    env: ui_settings
+    env: uiSettings
     targetPort: 8080
     secrets: {
       cosmos: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${cosmos.outputs.connectionStringSecretName}'
@@ -834,8 +858,8 @@ output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
 
 output AZURE_OPENAI_ENDPOINT string = openAI.outputs.endpoint
-output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = openAI.outputs.textEmbeddings[1].name
-output AZURE_OPENAI_EMBEDDING_MODEL string = openAI.outputs.textEmbeddings[1].model.name
+// TODO: output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = openAI.outputs.textEmbeddings[1].name
+// TODO: output AZURE_OPENAI_EMBEDDING_MODEL string = openAI.outputs.textEmbeddings[1].model.name
 output AZURE_SEARCH_ENDPOINT string = searchService.outputs.endpoint
 output AZURE_STORAGE_ENDPOINT string = 'https://${storage.outputs.name}.blob.${environment().suffixes.storage}'
 output AZURE_STORAGE_CONNECTION_STRING string = 'ResourceId=${storage.outputs.id}'

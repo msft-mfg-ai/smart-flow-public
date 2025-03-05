@@ -122,7 +122,7 @@ resource adminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   properties: {
     principalId: userObjectId
     principalType: userObjectType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRole)
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRoleId)
     description: 'Permission for admin ${userObjectId} to use ${aiHubName}'
   }
 }
@@ -133,7 +133,7 @@ resource applicationAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   properties: {
     principalId: managedIdentityPrincipalId
     principalType: managedIdentityType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRole)
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRoleId)
     description: 'Permission for application ${managedIdentityPrincipalId} to use ${aiHubName}'
   }
 }

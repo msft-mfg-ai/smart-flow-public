@@ -1,13 +1,33 @@
 param nsgName string
 param location string
 param tags object = {}
+param myIpAddress string = ''
+param existingVnetName string = ''
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
+var useExistingResource = !empty(existingVnetName)
+
+var myPersonalRule = myIpAddress == '' ? [] : [
+  {
+        name: 'AllowMyIP'
+        properties: {
+          priority: 140
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: '*'
+          sourceAddressPrefix: myIpAddress
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '443'
+        }
+    }
+]
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-01' = if (useExistingResource) {
   name: nsgName
   location: location
   tags: tags
   properties: {
-    securityRules: [
+    securityRules: union(myPersonalRule, [
       {
         name: 'AllowAnyCustom8080Inbound'
         type: 'Microsoft.Network/networkSecurityGroups/securityRules'
@@ -78,9 +98,9 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-0
           direction: 'Outbound'
         }
       }
-    ]
+    ])
   }
 }
 
-output id string = networkSecurityGroup.id
-output name string = networkSecurityGroup.name
+output id string = useExistingResource ? '' : networkSecurityGroup.id
+output name string = useExistingResource ? '' : networkSecurityGroup.name

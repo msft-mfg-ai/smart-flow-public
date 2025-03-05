@@ -11,29 +11,29 @@ param identityPrincipalId string
 @allowed(['ServicePrincipal', 'User'])
 param principalType string = 'ServicePrincipal'
 
-param registryName string = ''
-// param registryResourceGroupName string = resourceGroup().name
-param storageAccountName string = ''
-// param storageResourceGroupName string = resourceGroup().name
-param aiSearchName string = ''
-// param aiSearchResourceGroupName string = resourceGroup().name
-param aiServicesName string = ''
-// param aiServicesResourceGroupName string = resourceGroup().name
-param cosmosName string = ''
-// param cosmosResourceGroupName string = resourceGroup().name
+@description('If you supply this parameter, the roles will be granted at the resource group level instead of the resource level')
+param grantRolesAtResourceGroupLevel bool = false
 
-// param aiHubName string = ''
-// // param aiHubResourceGroupName string = resourceGroup().name
+param registryName string = ''
+param storageAccountName string = ''
+param aiSearchName string = ''
+param aiServicesName string = ''
+param cosmosName string = ''
+param keyvaultName string = ''
+param documentIntelligenceName string = ''
+param aiHubName string = ''
 
 // ----------------------------------------------------------------------------------------------------
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
+//var grantRolesAtResourceGroupLevel = resourceGroupName == '' ? false : true
 var addRegistryRoles = !empty(registryName)
 var addStorageRoles = !empty(storageAccountName)
 var addSearchRoles = !empty(aiSearchName)
 var addCogServicesRoles = !empty(aiServicesName)
 var addCosmosRoles = !empty(cosmosName)
-
-// var addAIHubRoles = !empty(aiHubName)
+var addKeyVaultRoles = !empty(keyvaultName)
+var addDocumentIntelligenceRoles = !empty(documentIntelligenceName)
+var addAIHubRoles = !empty(aiHubName)
 
 // ----------------------------------------------------------------------------------------------------
 // Registry Roles
@@ -43,8 +43,8 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' ex
   // scope: resourceGroup(registryResourceGroupName)
 }
 resource registry_Role_AcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addRegistryRoles) {
-  name: guid(registry.id, identityPrincipalId, roleDefinitions.containerregistry.acrPullRoleId)
-  scope: registry
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.containerregistry.acrPullRoleId) : guid(registry.id, identityPrincipalId, roleDefinitions.containerregistry.acrPullRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : registry
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -61,8 +61,8 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' existing 
   // scope: resourceGroup(storageResourceGroupName)
 }
 resource storage_Role_BlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addStorageRoles) {
-  name: guid(storageAccount.id, identityPrincipalId, roleDefinitions.storage.blobDataContributorRoleId)
-  scope: storageAccount
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.storage.blobDataContributorRoleId) : guid(storageAccount.id, identityPrincipalId, roleDefinitions.storage.blobDataContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : storageAccount
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -71,8 +71,8 @@ resource storage_Role_BlobContributor 'Microsoft.Authorization/roleAssignments@2
   }
 }
 resource storage_Role_TableContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addStorageRoles) {
-  name: guid(storageAccount.id, identityPrincipalId, roleDefinitions.storage.tableContributorRoleId)
-  scope: storageAccount
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.storage.tableContributorRoleId) : guid(storageAccount.id, identityPrincipalId, roleDefinitions.storage.tableContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : storageAccount
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -81,8 +81,8 @@ resource storage_Role_TableContributor 'Microsoft.Authorization/roleAssignments@
   }
 }
 resource storage_Role_QueueContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addStorageRoles) {
-  name: guid(storageAccount.id, identityPrincipalId, roleDefinitions.storage.queueDataContributorRoleId)
-  scope: storageAccount
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.storage.queueDataContributorRoleId) : guid(storageAccount.id, identityPrincipalId, roleDefinitions.storage.queueDataContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : storageAccount
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -99,8 +99,8 @@ resource aiService 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' exi
   // scope: resourceGroup(aiServicesResourceGroupName)
 }
 resource cognitiveServices_Role_OpenAIUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addCogServicesRoles) {
-  name: guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIUserRoleId)
-  scope: aiService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIUserRoleId) : guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIUserRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : aiService
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -109,8 +109,8 @@ resource cognitiveServices_Role_OpenAIUser 'Microsoft.Authorization/roleAssignme
   }
 }
 resource cognitiveServices_Role_OpenAIContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addCogServicesRoles) {
-  name: guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
-  scope: aiService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId) : guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : aiService
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -119,8 +119,8 @@ resource cognitiveServices_Role_OpenAIContributor 'Microsoft.Authorization/roleA
   }
 }
 resource cognitiveServices_Role_User 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addCogServicesRoles) {
-  name: guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId)
-  scope: aiService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId) : guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : aiService
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -129,8 +129,8 @@ resource cognitiveServices_Role_User 'Microsoft.Authorization/roleAssignments@20
   }
 }
 resource cognitiveServices_Role_Contributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addCogServicesRoles) {
-  name: guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesContributorRoleId)
-  scope: aiService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesContributorRoleId) : guid(aiService.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : aiService
   properties: {
     principalId: identityPrincipalId
     principalType: principalType
@@ -147,8 +147,8 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' exis
   // scope: resourceGroup(aiSearchResourceGroupName)
 }
 resource search_Role_IndexDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addSearchRoles) {
-  name: guid(searchService.id, identityPrincipalId, roleDefinitions.search.indexDataContributorRoleId)
-  scope: searchService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.search.indexDataContributorRoleId) : guid(searchService.id, identityPrincipalId, roleDefinitions.search.indexDataContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : searchService
   properties: {
     principalId: identityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.search.indexDataContributorRoleId)
@@ -157,8 +157,8 @@ resource search_Role_IndexDataContributor 'Microsoft.Authorization/roleAssignmen
   }
 }
 resource search_Role_IndexDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addSearchRoles) {
-  name: guid(searchService.id, identityPrincipalId, roleDefinitions.search.indexDataReaderRoleId)
-  scope: searchService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.search.indexDataReaderRoleId) : guid(searchService.id, identityPrincipalId, roleDefinitions.search.indexDataReaderRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : searchService
   properties: {
     principalId: identityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.search.indexDataReaderRoleId)
@@ -167,8 +167,8 @@ resource search_Role_IndexDataReader 'Microsoft.Authorization/roleAssignments@20
   }
 }
 resource search_Role_ServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addSearchRoles) {
-  name: guid(searchService.id, identityPrincipalId, roleDefinitions.search.serviceContributorRoleId)
-  scope: searchService
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.search.serviceContributorRoleId) : guid(searchService.id, identityPrincipalId, roleDefinitions.search.serviceContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : searchService
   properties: {
     principalId: identityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.search.serviceContributorRoleId)
@@ -185,8 +185,8 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' existi
   //scope: resourceGroup(cosmosResourceGroupName)
 }
 
-resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (addCosmosRoles) {
-  name: guid(cosmosAccount.id, identityPrincipalId, roleDefinitions.cosmos.dataContributorRoleId)
+resource cosmos_Role_DataContributor 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (addCosmosRoles) {
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.cosmos.dataContributorRoleId) : guid(cosmosAccount.id, identityPrincipalId, roleDefinitions.cosmos.dataContributorRoleId)
   parent: cosmosAccount
   properties: {
     principalId: identityPrincipalId
@@ -195,20 +195,87 @@ resource cosmosDbUserAccessRoleAssignment 'Microsoft.DocumentDB/databaseAccounts
   }
 }
 
-// // ----------------------------------------------------------------------------------------------------
-// // AI Hub Roles
-// // ----------------------------------------------------------------------------------------------------
-// resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = if (addAIHubRoles) {
-//   name: aiHubName
-//   //scope: resourceGroup(aiHubResourceGroupName)
-// }
-// resource aiHub_Role_DataScientist 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addAIHubRoles) {
-//   name: guid(aiHub.id, identityPrincipalId, roleDefinitions.ml.dataScientistRole)
-//   scope: aiHub
-//   properties: {
-//     principalId: identityPrincipalId
-//     principalType: principalType
-//     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRole)
-//     description: 'Permission for ${principalType} ${identityPrincipalId} to be in Data Scientist Role'
-//   }
-// }
+// ----------------------------------------------------------------------------------------------------
+// Document Intelligence Roles
+// ----------------------------------------------------------------------------------------------------
+resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (addDocumentIntelligenceRoles) {
+  name: documentIntelligenceName
+}
+
+resource documentIntelligence_Role_OpenAIContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addDocumentIntelligenceRoles) {
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId) : guid(documentIntelligence.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : documentIntelligence
+  properties: {
+    principalId: identityPrincipalId
+    principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
+    description: 'Permission for ${principalType} ${identityPrincipalId} to use the Document Intelligence cognitive services'
+  }
+}
+resource documentIntelligence_Role_User 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addDocumentIntelligenceRoles) {
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId) : guid(documentIntelligence.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : documentIntelligence
+  properties: {
+    principalId: identityPrincipalId
+    principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesUserRoleId)
+    description: 'Permission for ${principalType} ${identityPrincipalId} to use the Document Intelligence'
+  }
+}
+
+
+// ----------------------------------------------------------------------------------------------------
+// Document Intelligence Roles
+// ----------------------------------------------------------------------------------------------------
+resource keyvault 'Microsoft.KeyVault/vaults@2023-02-01' existing = if (addKeyVaultRoles) {
+  name: keyvaultName
+}
+resource keyVault_Role_Contributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addKeyVaultRoles) {
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.keyvault.contributorRoleId) : guid(keyvault.id, identityPrincipalId, roleDefinitions.keyvault.contributorRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : keyvault
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.keyvault.contributorRoleId)
+    principalType: principalType
+    description: 'Permission for ${principalType} ${identityPrincipalId} to manage the key vault ${keyvault.name}'
+  }
+}
+
+resource keyVault_Role_SecretOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addKeyVaultRoles) {
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : keyvault
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.keyvault.secretOfficerRoleId) : guid(keyvault.id, identityPrincipalId, roleDefinitions.keyvault.secretOfficerRoleId)
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.keyvault.secretOfficerRoleId)
+    principalType: principalType
+    description: 'Permission for ${principalType} ${identityPrincipalId} to manage secrets in ${keyvault.name}'
+  }
+}
+resource keyVault_Role_Administrator 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addKeyVaultRoles) {
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : keyvault
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.keyvault.administratorRoleId) : guid(keyvault.id, identityPrincipalId, roleDefinitions.keyvault.administratorRoleId)
+  properties: {
+    principalId: identityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.keyvault.administratorRoleId)
+    principalType: principalType
+    description: 'Permission for ${principalType} ${identityPrincipalId} to administer ${keyvault.name}'
+  }
+}
+
+// ----------------------------------------------------------------------------------------------------
+// AI Hub Roles
+// ----------------------------------------------------------------------------------------------------
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = if (addAIHubRoles) {
+  name: aiHubName
+  //scope: resourceGroup(aiHubResourceGroupName)
+}
+resource aiHub_Role_DataScientist 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addAIHubRoles) {
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.ml.dataScientistRoleId) : guid(aiHub.id, identityPrincipalId, roleDefinitions.ml.dataScientistRoleId)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : aiHub
+  properties: {
+    principalId: identityPrincipalId
+    principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRoleId)
+    description: 'Permission for ${principalType} ${identityPrincipalId} to be in Data Scientist Role'
+  }
+}
