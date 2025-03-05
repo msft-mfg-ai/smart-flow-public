@@ -87,3 +87,13 @@ hooks:
       $json_content | Set-Content ./app/Assistant.Hub.Api.Batch/local.settings.json
     continueOnError: false
     interactive: false
+    windows:
+      shell: pwsh
+      run: ./scripts/approve_pe.ps1; ./scripts/setup_intvect.ps1
+      interactive: false
+      continueOnError: false
+    posix:
+      shell: sh
+      run: ./scripts/approve_pe.sh; ./scripts/setup_intvect.sh
+      interactive: false
+      continueOnError: false

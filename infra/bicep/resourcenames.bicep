@@ -26,6 +26,7 @@ output webSiteAppServicePlanName string   = toLower('${sanitizedAppName}-${resou
 
 output appInsightsName string             = toLower('${sanitizedAppName}-${resourceAbbreviations.insightsComponents}-${sanitizedEnvironment}${resourceTokenWithDash}')
 output logAnalyticsWorkspaceName string   = toLower('${sanitizedAppName}-${resourceAbbreviations.operationalInsightsWorkspaces}-${sanitizedEnvironment}${resourceTokenWithDash}')
+output azureMonitorPLSName string         = toLower('${sanitizedAppName}-${resourceAbbreviations.networkPrivateLinkServices}monitor-${sanitizedEnvironment}${resourceTokenWithDash}')
 
 output cosmosName string                  = toLower('${sanitizedAppName}-${resourceAbbreviations.documentDBDatabaseAccounts}-${sanitizedEnvironment}${resourceTokenWithDash}')
 

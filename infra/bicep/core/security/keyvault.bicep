@@ -32,6 +32,8 @@ param enablePurgeProtection bool = true
 param softDeleteRetentionInDays int = 7
 @description('Determines if access to the objects granted using RBAC. When true, access policies are ignored.')
 param useRBAC bool = false
+@description('Determines if IAM role assignments should be added to the Key Vault.')
+param addRoleAssignments bool = false
 
 @allowed(['Enabled','Disabled'])
 param publicNetworkAccess string = 'Enabled'
@@ -78,7 +80,7 @@ var ownerAccessPolicy = keyVaultOwnerUserId == '' ? [] : [
   }
 ]
 var adminAccessPolicies = [for adminUser in adminUserObjectIds: {
-  objectId: adminUser
+  objectId: adminUser.principalId
   tenantId: subTenantId
   permissions: {
     certificates: [ 'all' ]
@@ -150,6 +152,20 @@ var userAssignedIdentityPolicies = (!createUserAssignedIdentity) ? [] : [{
   }
 }]
 
+resource userAssignedIdentityAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createUserAssignedIdentity && addRoleAssignments) {
+  scope: keyVaultResource
+  name: guid(resourceGroup().id, userAssignedIdentity.id, roleDefinitions.keyvault.keyVaultContributorRoleId, keyVaultResource.id)
+  properties: {
+    principalId: userAssignedIdentity.properties.principalId
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      roleDefinitions.keyvault.keyVaultSecretOfficerRoleId
+    )
+    principalType: 'ServicePrincipal'
+    description: 'Permission for ServicePrincipal ${userAssignedIdentity.properties.principalId} to manage secrets in the key vault ${keyVaultResource.name}'
+  }
+}
+
 // this creates an identity for DAPR that can be used to get secrets
 resource daprIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = if (!useExistingVault && createDaprIdentity) {
   name: daprIdentityName
@@ -220,6 +236,37 @@ module privateEndpoint '../networking/private-endpoint.bicep' = if (!useExisting
       groupIds: ['vault']
       targetResourceId: keyVaultResource.id
       subnetId: privateEndpointSubnetId
+    }
+  }
+
+  var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
+
+  resource keyVaultAdminAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for adminUser in adminUserObjectIds: if (!useExistingVault && addRoleAssignments)  {
+    scope: keyVaultResource
+    name: guid(resourceGroup().id, adminUser.principalId, roleDefinitions.keyvault.keyVaultContributorRoleId, keyVaultResource.id)
+    properties: {
+      principalId: adminUser.principalId
+      roleDefinitionId: subscriptionResourceId(
+        'Microsoft.Authorization/roleDefinitions',
+        roleDefinitions.keyvault.keyVaultAdministratorRoleId
+      )
+      principalType: adminUser.principalType
+      description: 'Permission for ${adminUser.principalType} ${adminUser.principalId} to administer the key vault ${keyVaultResource.name}'
+    }
+  }
+  ]
+
+  resource keyVaultOwnerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!useExistingVault && addRoleAssignments && !empty(keyVaultOwnerUserId)) {
+    scope: keyVaultResource
+    name: guid(resourceGroup().id, keyVaultOwnerUserId, roleDefinitions.keyvault.keyVaultContributorRoleId, keyVaultResource.id)
+    properties: {
+      principalId: keyVaultOwnerUserId
+      roleDefinitionId: subscriptionResourceId(
+        'Microsoft.Authorization/roleDefinitions',
+        roleDefinitions.keyvault.keyVaultAdministratorRoleId
+      )
+      principalType: 'User'
+      description: 'Permission for User ${keyVaultOwnerUserId} to administer the key vault ${keyVaultResource.name}'
     }
   }
 

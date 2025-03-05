@@ -1,13 +1,19 @@
 param location string = resourceGroup().location
+param modelLocation string = location
 
 param existingVirtualNetworkName string = ''
 param existingVnetResourceGroupName string = resourceGroup().name
 param newVirtualNetworkName string = ''
 param vnetAddressPrefix string
+
+@description('Ip Address to allow access to the Azure Search Service')
+param myIpAddress string = ''
+
 param subnet1Name string
 param subnet2Name string
 param subnet1Prefix string
 param subnet2Prefix string
+param otherSubnets object[] = []
 
 var useExistingResource = !empty(existingVirtualNetworkName)
 
@@ -28,6 +34,22 @@ module appSubnetNSG './network-security-group.bicep' = if (!useExistingResource)
     location: location
   }
 }
+
+var moreSubnets = [
+  for subnet in otherSubnets: {
+    name: subnet.name
+    properties: union(
+      subnet.properties,
+      !useExistingResource
+        ? {
+            networkSecurityGroup: {
+              id: nsg.id
+            }
+          }
+        : {}
+    )
+  }
+]
 
 resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (!useExistingResource) {
   name: newVirtualNetworkName

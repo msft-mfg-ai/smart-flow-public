@@ -128,6 +128,13 @@ param existing_KeyVault_ResourceGroupName string = ''
 param deployAIHub bool = true
 
 // --------------------------------------------------------------------------------------------------------------
+// Search Service
+// --------------------------------------------------------------------------------------------------------------
+// The free tier does not support managed identity (required) or semantic search (optional)
+@allowed(['free', 'basic', 'standard', 'standard2', 'standard3', 'storage_optimized_l1', 'storage_optimized_l2'])
+param searchServiceSkuName string = 'basic'
+
+// --------------------------------------------------------------------------------------------------------------
 // Existing images
 // --------------------------------------------------------------------------------------------------------------
 param apiImageName string = ''
@@ -201,11 +208,28 @@ module vnet './core/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
+    myIpAddress: myIpAddress
     vnetAddressPrefix: vnetPrefix
     subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
     subnet1Prefix: subnet1Prefix
     subnet2Name: !empty(subnet2Name) ? subnet2Name : resourceNames.outputs.vnetAppSubnetName
     subnet2Prefix: subnet2Prefix
+    otherSubnets: [{
+      name: 'snet-agents'
+      properties: {
+        addressPrefix: '10.2.4.0/24'
+        delegations: [
+          {
+            name: 'Microsoft.app/environments'
+            properties: {
+              serviceName: 'Microsoft.app/environments'
+            }
+          }
+        ]
+      }
+    }]
+
+    modelLocation: openAI_deploy_location
   }
 }
 
@@ -241,6 +265,9 @@ module logAnalytics './core/monitor/loganalytics.bicep' = {
     newApplicationInsightsName: resourceNames.outputs.appInsightsName
     location: location
     tags: tags
+    privateEndpointName: 'pe-pls-${resourceNames.outputs.azureMonitorPLSName}'
+    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    azureMonitorPrivateLinkScopeName: resourceNames.outputs.azureMonitorPLSName
   }
 }
 
@@ -253,13 +280,37 @@ module storage './core/storage/storage-account.bicep' = {
     name: resourceNames.outputs.storageAccountName
     location: location
     tags: tags
-    // publicNetworkAccess: publicAccessEnabled
+    publicNetworkAccess: publicAccessEnabled
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
     privateEndpointBlobName: 'pe-blob-${resourceNames.outputs.storageAccountName}'
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
     myIpAddress: myIpAddress
     containers: ['data', 'batch-input', 'batch-output']
+    resourcesWithAccess: union([
+      {
+        resourceId: searchService.outputs.id
+        tenantId: subscription().tenantId
+      }
+      {
+        resourceId: openAI.outputs.id
+        tenantId: subscription().tenantId
+      }
+      {
+        resourceId: documentIntelligence.outputs.id
+        tenantId: subscription().tenantId
+      }
+    ], deployAIHub ? [
+        {
+          resourceId: resourceId('Microsoft.MachineLearningServices/workspaces', resourceNames.outputs.aiHubName)
+          tenantId: subscription().tenantId
+        }
+        {
+          resourceId: resourceId('Microsoft.MachineLearningServices/workspaces', resourceNames.outputs.aiHubProjectName)
+          tenantId: subscription().tenantId
+        }
+      ] :[]
+    )
   }
 }
 
@@ -280,8 +331,10 @@ module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addR
     principalType: 'ServicePrincipal'
     registryName: containerRegistry.outputs.name
     storageAccountName: storage.outputs.name
-    aiSearchName: searchService.outputs.name
+    keyvaultName: keyVault.outputs.name
     aiServicesName: openAI.outputs.name
+    documentIntelligenceName: documentIntelligence.outputs.name
+    aiSearchName: searchService.outputs.name
     cosmosName: cosmos.outputs.name
   }
 }
@@ -293,8 +346,10 @@ module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRol
     principalType: 'User'
     registryName: containerRegistry.outputs.name
     storageAccountName: storage.outputs.name
-    aiSearchName: searchService.outputs.name
+    keyvaultName: keyVault.outputs.name
     aiServicesName: openAI.outputs.name
+    documentIntelligenceName: documentIntelligence.outputs.name
+    aiSearchName: searchService.outputs.name
     cosmosName: cosmos.outputs.name
   }
 }
@@ -308,12 +363,17 @@ module keyVault './core/security/keyvault.bicep' = {
     existingKeyVaultName: existing_KeyVault_Name
     existingKeyVaultResourceGroupName: existing_KeyVault_ResourceGroupName
     keyVaultOwnerUserId: principalId
-    adminUserObjectIds: [identity.outputs.managedIdentityPrincipalId]
+    adminUserObjectIds: [{
+      principalId: identity.outputs.managedIdentityPrincipalId
+      principalType: 'ServicePrincipal'
+    }]
     publicNetworkAccess: publicAccessEnabled ? 'Enabled' : 'Disabled'
     keyVaultOwnerIpAddress: myIpAddress
     createUserAssignedIdentity: false
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    useRBAC: true
+    addRoleAssignments: addRoleAssignments
   }
 }
 
@@ -422,6 +482,7 @@ module cosmos './core/database/cosmosdb.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- Cognitive Services Resources ------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
+var actualSearchServiceSemanticRankerLevel = (searchServiceSkuName == 'free') ? 'disabled' : searchServiceSemanticRankerLevel
 module searchService './core/search/search-services.bicep' = {
   name: 'search${deploymentSuffix}'
   params: {
@@ -431,12 +492,22 @@ module searchService './core/search/search-services.bicep' = {
     existingSearchServiceResourceGroupName: existing_SearchService_ResourceGroupName
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     myIpAddress: myIpAddress
+    semanticSearch: actualSearchServiceSemanticRankerLevel
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
     privateEndpointName: 'pe-${resourceNames.outputs.searchServiceName}'
     managedIdentityId: identity.outputs.managedIdentityId
     sku: {
-      name: 'basic'
+      name: searchServiceSkuName
     }
+  }
+}
+
+module searchServicePrivateLink './core/search/search-privatelink.bicep' = {
+  name: 'search-privatelink${deploymentSuffix}'
+  params: {
+    searchName: searchService.outputs.name
+    openAiServiceName: openAI.outputs.name
+    storageAccountName: storage.outputs.name
   }
 }
 
@@ -463,13 +534,13 @@ module openAI './core/ai/cognitive-services.bicep' = {
       DeploymentName: 'gpt-35-turbo'
       ModelName: 'gpt-35-turbo'
       ModelVersion: '0125'
-      DeploymentCapacity: 10
+      DeploymentCapacity: 100
     }
     chatGpt_Premium: {
       DeploymentName: 'gpt-4o'
       ModelName: 'gpt-4o'
       ModelVersion: '2024-08-06'
-      DeploymentCapacity: 10
+      DeploymentCapacity: 100
     }
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
@@ -529,15 +600,21 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
 module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
   name: 'aiProject${deploymentSuffix}'
   params: {
+    // workspace organization
     aiProjectName: resourceNames.outputs.aiHubProjectName
     aiProjectFriendlyName: aiProjectFriendlyName
     aiProjectDescription: aiProjectDescription
     location: location
     tags: tags
     aiHubId: aiHub.outputs.id
+    // dependent resources
+    capabilityHostName: capabilityHostName
+
+    acsConnectionName: aiHub.outputs.acsConnectionName
+    aoaiConnectionName: aiHub.outputs.aoaiConnectionName
+    hubIdentityResourceId: identity.outputs.managedIdentityId
   }
 }
-
 
 // --------------------------------------------------------------------------------------------------------------
 // -- DNS ZONES ---------------------------------------------------------------------------------
@@ -557,6 +634,8 @@ module allDnsZones './core/networking/all-zones.bicep' = if (createDnsZones) {
     storageBlobPrivateEndpointName: storage.outputs.privateEndpointBlobName
     storageQueuePrivateEndpointName: storage.outputs.privateEndpointQueueName
     storageTablePrivateEndpointName: storage.outputs.privateEndpointTableName
+    appInsightsPrivateEndpointName: logAnalytics.outputs.privateEndpointName
+    hubPrivateEndpointName: aiHub.outputs.privateEndpointName
 
     defaultAcaDomain: managedEnvironment.outputs.defaultDomain
     acaStaticIp: managedEnvironment.outputs.staticIp
@@ -577,6 +656,8 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
     appSubnetId: vnet.outputs.subnet2ResourceId
     tags: tags
     publicAccessEnabled: publicAccessEnabled
+    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    privateEndpointName: 'pe-${resourceNames.outputs.caManagedEnvName}'
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
   }
 }
@@ -604,6 +685,7 @@ var apiSettings = [
   { name: 'ContentStorageContainer', value: storage.outputs.containerNames[0].name }
   { name: 'CosmosDbEndpoint', value: cosmos.outputs.endpoint }
   { name: 'StorageAccountName', value: storage.outputs.name }
+  { name: 'Swagger__Enabled', value: 'true' }
 ]
 
 module containerAppAPI './core/host/containerappstub.bicep' = {
@@ -672,12 +754,58 @@ module containerAppBatch './core/host/containerappstub.bicep' = if (deployBatchA
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
+var ui_settings = union(settings, [
+  { name: 'AOAIEmbeddingsDeployment', value: 'text-embedding' }
+  { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
+  // "AzureSearchIndexName": "vector-<value>-indexer",
+  { name: 'AzureSearchServiceEndpoint', value: searchService.outputs.endpoint }
+  // { name: 'StorageAccountName', value: storageAccount.outputs.name }
+  { name: 'AzureStorageAccountEndPoint', value: 'https://${storage.outputs.name}.blob.${environment().suffixes.storage}' }
+  { name: 'AzureStorageUserUploadContainer', value: 'content' }
+  { name: 'CosmosDbDatabaseName', value: 'ChatHistory' }
+  { name: 'CosmosDbCollectionName', value: 'ChatTurn' }
+  { name: 'DocumentUploadStrategy', value: 'AzureNative' }
+  { name: 'EnableDataProtectionBlobKeyStorage', value: 'true' }
+  { name: 'ProfileFileName', value: 'profiles' }
+  { name: 'ShowCollectionsSelection', value: 'true' }
+  { name: 'ShowFileUploadSelection', value: 'true' }
+  { name: 'UseManagedIdentityResourceAccess', value: 'true' }
+  { name: 'UserAssignedManagedIdentityClientId', value: identity.outputs.managedIdentityClientId }
+])
+
+module ui_app './core/host/containerappstub.bicep' = {
+  name: 'ui-app${deploymentSuffix}'
+  params: {
+    tags: union(tags, { 'azd-service-name': 'ui' })
+    appName: resourceNames.outputs.containerAppUIName
+    location: location
+    managedEnvironmentName: managedEnvironment.outputs.name
+    managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
+    registryName: containerRegistry.outputs.name
+    imageName: uiImageName
+    userAssignedIdentityName: identity.outputs.managedIdentityName
+    deploymentSuffix: deploymentSuffix
+    env: ui_settings
+    targetPort: 8080
+    secrets: {
+      cosmos: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${cosmos.outputs.connectionStringSecretName}'
+      aikey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${openAI.outputs.cognitiveServicesKeySecretName}'
+      searchkey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${searchService.outputs.searchKeySecretName}'
+      docintellikey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${documentIntelligence.outputs.keyVaultSecretName}'
+      apikey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/api-key'
+    }
+  }
+}
+
 // --------------------------------------------------------------------------------------------------------------
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
+output AZURE_TENANT_ID string = tenant().tenantId
+output USER_ASSIGNED_IDENTITY_ID string = identity.outputs.managedIdentityId
 output ACR_NAME string = containerRegistry.outputs.name
 output ACR_URL string = containerRegistry.outputs.loginServer
+output AI_ID string = openAI.outputs.id
 output AI_ENDPOINT string = openAI.outputs.endpoint
 output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
 output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
@@ -704,3 +832,13 @@ output STORAGE_ACCOUNT_NAME string = storage.outputs.name
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
+
+output AZURE_OPENAI_ENDPOINT string = openAI.outputs.endpoint
+output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = openAI.outputs.textEmbeddings[1].name
+output AZURE_OPENAI_EMBEDDING_MODEL string = openAI.outputs.textEmbeddings[1].model.name
+output AZURE_SEARCH_ENDPOINT string = searchService.outputs.endpoint
+output AZURE_STORAGE_ENDPOINT string = 'https://${storage.outputs.name}.blob.${environment().suffixes.storage}'
+output AZURE_STORAGE_CONNECTION_STRING string = 'ResourceId=${storage.outputs.id}'
+output AZURE_PATTERNS_INDEX_STORAGE_CONTAINER string = storage.outputs.containerNames[3].name
+output AZURE_COMPUTE_INDEX_STORAGE_CONTAINER string = storage.outputs.containerNames[4].name
+output AZURE_STORAGE_ID string = storage.outputs.id
