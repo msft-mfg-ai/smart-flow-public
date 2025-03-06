@@ -1,4 +1,6 @@
-// Creates an Azure AI resource with proxied endpoints for the Azure AI services provider
+// --------------------------------------------------------------------------------
+// Creates an Azure AI Hub Project with proxied endpoints
+// --------------------------------------------------------------------------------
 
 @description('Azure region of the deployment')
 param location string
@@ -33,14 +35,10 @@ param hubIdentityResourceId string = ''
 //for constructing endpoint
 var subscriptionId = subscription().subscriptionId
 var resourceGroupName = resourceGroup().name
-
 var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
-
-
 var storageConnections = ['${aiProjectName}/workspaceblobstore']
 var aiSearchConnection = ['${acsConnectionName}']
 var aiServiceConnections = ['${aoaiConnectionName}']
-
 
 resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
   name: aiProjectName

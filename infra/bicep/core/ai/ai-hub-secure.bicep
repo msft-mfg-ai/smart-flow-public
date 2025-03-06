@@ -1,12 +1,12 @@
+// Creates an Azure AI Hub resource with proxied endpoints for the Azure AI services provider
 // Copied from https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.machinelearningservices/aistudio-entraid-passthrough
 // See also https://learn.microsoft.com/en-us/samples/azure-samples/azure-ai-studio-secure-bicep/azure-ai-studio-secure-bicep/
-// Creates an Azure AI Hub resource with proxied endpoints for the Azure AI services provider
 
 @description('Azure region used for the deployment of the Azure AI Hub.')
 param location string
 
 @description('Set of tags to apply to the Azure AI Hub.')
-param tags object = {}
+param tags object
 
 @description('Name for the Azure AI Hub resource.')
 param aiHubName string
@@ -35,43 +35,38 @@ param aiServicesId string
 @description('Target endpoint for the Azure AI Services resource to link to the Azure AI Hub.')
 param aiServicesTarget string
 
-@description('Flag to determine if role assignments should be added to the Azure AI Hub.')
-param addRoleAssignments bool = true
-
-@description('The object ID of a Microsoft Entra ID users to be granted necessary role assignments to access the Azure AI Hub.')
-param userObjectId string = ''
-param userObjectType string = 'User'
-
-// @description('The object ID of the application identity to be granted necessary role assignments to access the Azure AI Hub.')
-// param managedIdentityResourceId string = ''
-@description('The principal ID of the application identity to be granted necessary role assignments to access the Azure AI Hub.')
-param managedIdentityPrincipalId string = ''
-param managedIdentityType string = 'ServicePrincipal'
+@description('The resource ID of the Microsoft Entra ID identity to use as hub identity. When not provided system assigned identity is used.')
+param hubIdentityResourceId string = ''
 
 @description('Name AI Search resource')
 param aiSearchName string
-param aiSearchResourceGroupName string = resourceGroup().name
 
-var aiServiceConnectionName = '${aiHubName}-connection-AIService'
-var searchConnectionName  = '${aiHubName}-connection-AISearch'
+param privateEndpointSubnetId string = ''
+param privateEndpointName string = ''
 
-resource aiSearch 'Microsoft.Search/searchServices@2020-03-13' existing = {
+var acsConnectionName = '${aiHubName}-connection-AISearch'
+var aoaiConnectionName = '${aiHubName}-connection-AIServices_aoai'
+
+resource aisearch 'Microsoft.Search/searchServices@2020-03-13' existing = {
   name: aiSearchName
-  scope: resourceGroup(aiSearchResourceGroupName)
 }
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
+@description('Name for capabilityHost.')
+param capabilityHostName string = 'caphost1'
+
+@description('Provide the IP address to allow access to the Azure Container Registry')
+param myIpAddress string = ''
+
+var useProvidedHubIdentity = !empty(hubIdentityResourceId)
+
+resource aiHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' = {
   name: aiHubName
   location: location
   tags: tags
   kind: 'Hub'
   identity: {
-    type: 'SystemAssigned'
-    // tried this but it keeps getting a 400 error with not other details...?
-    // type: 'UserAssigned'
-    // userAssignedIdentities: {
-    //   '${managedIdentityResourceId}': {}
-    // }
+    type: useProvidedHubIdentity ? 'UserAssigned' : 'SystemAssigned'
+    userAssignedIdentities: useProvidedHubIdentity ? { '${hubIdentityResourceId}': {} } :  {}
   }
   properties: {
     // organization
@@ -84,61 +79,126 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
     applicationInsights: applicationInsightsId
     containerRegistry: containerRegistryId
     //systemDatastoresAuthMode: 'identity'
+    primaryUserAssignedIdentity: hubIdentityResourceId
+    ipAllowlist: empty(myIpAddress) ? [] : [myIpAddress]
+    systemDatastoresAuthMode: 'identity'
+    // THIS IS NOT WORKING
+    //sharedPrivateLinkResources: [
+    // {
+    //   name: 'link-to-openai-openai'
+    //   properties: {
+    //     groupId: 'openai_account'
+    //     privateLinkResourceId: aiServicesId
+    //     requestMessage: 'automatically created by the system'
+    //     status: 'Approved'
+    //   }
+    // }
+    // {
+    //   name: 'link-to-storage-blob'
+    //   properties: {
+    //     groupId: 'blob'
+    //     privateLinkResourceId: storageAccountId
+    //     requestMessage: 'automatically created by the system'
+    //     status: 'Approved'
+    //   }
+    // }
+    // {
+    //   name: 'link-to-storage-file'
+    //   properties: {
+    //     groupId: 'file'
+    //     privateLinkResourceId: storageAccountId
+    //     requestMessage: 'automatically created by the system'
+    //     status: 'Approved'
+    //   }
+    // }
+    // {
+    //   name: 'link-to-search-${aiSearchName}'
+    //   properties: {
+    //     groupId: 'search'
+    //     privateLinkResourceId: aisearch.id
+    //     requestMessage: 'automatically created by the system'
+    //     status: 'Approved'
+    //   }
+    // }
+    // ]
   }
 
-  resource aiHubAIServiceConnection 'connections@2024-10-01' = {
-    name: aiServiceConnectionName
+  resource aiServicesConnection 'connections@2024-10-01' = {
+    name: aoaiConnectionName
     properties: {
       category: 'AzureOpenAI'
       target: aiServicesTarget
-      isSharedToAll: true
       authType: 'AAD'
+      isSharedToAll: true
       metadata: {
         ApiType: 'Azure'
         ResourceId: aiServicesId
       }
     }
   }
-  resource aiHubSearchConnection 'connections@2024-07-01-preview' = {
-    name: searchConnectionName
+
+  resource hub_connection_azureai_search 'connections@2024-07-01-preview' = {
+    name: acsConnectionName
     properties: {
       category: 'CognitiveSearch'
       target: 'https://${aiSearchName}.search.windows.net'
-      isSharedToAll: true
       authType: 'AAD'
+      //useWorkspaceManagedIdentity: false
+      isSharedToAll: true
       metadata: {
         ApiType: 'Azure'
-        ResourceId: aiSearch.id
-        location: aiSearch.location
+        ResourceId: aisearch.id
+        location: aisearch.location
       }
     }
   }
-}
 
-var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
-resource adminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addRoleAssignments && userObjectId != '') {
-  name: guid(aiHub.id, userObjectId, 'dataScientistRole')
-  scope: aiHub
-  properties: {
-    principalId: userObjectId
-    principalType: userObjectType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRoleId)
-    description: 'Permission for admin ${userObjectId} to use ${aiHubName}'
+  // This fails...
+  // resource aiServicesConnection 'connections@2024-04-01-preview' = {
+  //   name: '${aiHubName}-connection'
+  //   properties: {
+  //     category: 'OpenAI'        // Error: Unsupported authtype AAD for OpenAI (Code: ValidationError)
+  //     // category: 'AIServices' // Error: The associated account is of kind OpenAI. Please provide an account of kind AIServices. 
+  //     target: aiServicesTarget
+  //     authType: 'AAD'
+  //     isSharedToAll: true
+  //     metadata: {
+  //       ApiType: 'Azure'
+  //       ResourceId: aiServicesId
+  //     }
+  //   }
+  // }
+
+  // Resource definition for the capability host
+  // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
+  resource capabilityHost 'capabilityHosts@2025-01-01-preview' = {
+    name: capabilityHostName
+    properties: {
+      // TODO: this doesn't work
+      // "code": "UserError",
+      // "message": "/subscriptions/0721e282-2773-4021-af16-e00641ed5e36/resourceGroups/rg-philips-emissions/providers/Microsoft.Network/virtualNetworks/philipsemissions-vnet-dev/subnets/snet-agents is invalid",
+      // customerSubnet: subnetId
+      capabilityHostKind: 'Agents'
+    }
   }
+  dependsOn: [
+    aisearch
+  ]
 }
 
-resource applicationAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addRoleAssignments && managedIdentityPrincipalId != '') {
-  name: guid(aiHub.id, managedIdentityPrincipalId, 'dataScientistRole')
-  scope: aiHub
-  properties: {
-    principalId: managedIdentityPrincipalId
-    principalType: managedIdentityType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRoleId)
-    description: 'Permission for application ${managedIdentityPrincipalId} to use ${aiHubName}'
+module hubPrivateEndpoint '../networking/private-endpoint.bicep' = if (!empty(privateEndpointSubnetId)) {
+  name: 'hub-private-endpoint'
+  params: {
+    privateEndpointName: privateEndpointName
+    groupIds: ['amlworkspace']
+    targetResourceId: aiHub.id
+    subnetId: privateEndpointSubnetId
   }
 }
 
 output id string = aiHub.id
 output name string = aiHub.name
-output aiServiceConnectionName string = aiServiceConnectionName
-output searchConnectionName string = searchConnectionName
+output aoaiConnectionName string = aoaiConnectionName
+output acsConnectionName string = acsConnectionName
+output aiHubPrincipalId string = empty(hubIdentityResourceId) ? aiHub.identity.principalId : aiHub.identity.userAssignedIdentities[hubIdentityResourceId].principalId
+output privateEndpointName string = privateEndpointName

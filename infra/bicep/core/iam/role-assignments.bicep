@@ -1,14 +1,17 @@
 // ----------------------------------------------------------------------------------------------------
-// Assign roles to the service principal or a given user
+// Assign roles needed for a working AI Application to the a userId (service principal or user)
 // ----------------------------------------------------------------------------------------------------
-// NOTE: this requires elevated permissions in the resource group
-// Contributor is not enough, you need Owner or User Access Administrator
+// NOTE: this script requires elevated permissions in the resource group
+// Contributor is not enough, you need 'Owner' or 'User Access Administrator'
 // ----------------------------------------------------------------------------------------------------
+// The Role Id's are defined in the roleDefinitions.json file
 // For a list of Role Id's see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 // ----------------------------------------------------------------------------------------------------
-
+@description('The principal that is being granted the rights')
 param identityPrincipalId string
+
 @allowed(['ServicePrincipal', 'User'])
+@description('Is this principal a ServicePrincipal or a User?')
 param principalType string = 'ServicePrincipal'
 
 @description('If you supply this parameter, the roles will be granted at the resource group level instead of the resource level')
@@ -25,7 +28,6 @@ param aiHubName string = ''
 
 // ----------------------------------------------------------------------------------------------------
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
-//var grantRolesAtResourceGroupLevel = resourceGroupName == '' ? false : true
 var addRegistryRoles = !empty(registryName)
 var addStorageRoles = !empty(storageAccountName)
 var addSearchRoles = !empty(aiSearchName)
@@ -182,7 +184,6 @@ resource search_Role_ServiceContributor 'Microsoft.Authorization/roleAssignments
 // ----------------------------------------------------------------------------------------------------
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' existing = if (addCosmosRoles) {
   name: cosmosName
-  //scope: resourceGroup(cosmosResourceGroupName)
 }
 
 resource cosmos_Role_DataContributor 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = if (addCosmosRoles) {
@@ -267,7 +268,6 @@ resource keyVault_Role_Administrator 'Microsoft.Authorization/roleAssignments@20
 // ----------------------------------------------------------------------------------------------------
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = if (addAIHubRoles) {
   name: aiHubName
-  //scope: resourceGroup(aiHubResourceGroupName)
 }
 resource aiHub_Role_DataScientist 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addAIHubRoles) {
   name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.ml.dataScientistRoleId) : guid(aiHub.id, identityPrincipalId, roleDefinitions.ml.dataScientistRoleId)
@@ -277,5 +277,16 @@ resource aiHub_Role_DataScientist 'Microsoft.Authorization/roleAssignments@2022-
     principalType: principalType
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ml.dataScientistRoleId)
     description: 'Permission for ${principalType} ${identityPrincipalId} to be in Data Scientist Role'
+  }
+}
+
+resource aiHub_Role_Administrator 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addAIHubRoles) {
+  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.ai.administrator) : guid(aiHub.id, identityPrincipalId, roleDefinitions.ai.administrator)
+  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : aiHub
+  properties: {
+    principalId: identityPrincipalId
+    principalType: principalType
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.ai.administrator)
+    description: 'Permission for ${principalType} ${identityPrincipalId} to administer ${aiHubName}'
   }
 }

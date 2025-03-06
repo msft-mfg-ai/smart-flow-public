@@ -32,8 +32,6 @@ param enablePurgeProtection bool = true
 param softDeleteRetentionInDays int = 7
 @description('Determines if access to the objects granted using RBAC. When true, access policies are ignored.')
 param useRBAC bool = false
-@description('Determines if IAM role assignments should be added to the Key Vault.')
-param addRoleAssignments bool = false
 
 @allowed(['Enabled','Disabled'])
 param publicNetworkAccess string = 'Enabled'

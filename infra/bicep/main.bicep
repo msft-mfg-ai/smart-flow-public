@@ -163,6 +163,8 @@ param deduplicateKeyVaultSecrets bool = true
 param appendResourceTokens bool = false
 @description('Should batch container app be deployed?')
 param deployBatchApp bool = true
+@description('Should UI container app be deployed?')
+param deployUIApp bool = true
 
 // --------------------------------------------------------------------------------------------------------------
 // A variable masquerading as a parameter to allow for dynamic value assignment in Bicep
@@ -237,16 +239,10 @@ module vnet './core/networking/vnet.bicep' = {
       properties: {
         addressPrefix: '10.2.4.0/24'
         delegations: [
-          {
-            name: 'Microsoft.app/environments'
-            properties: {
-              serviceName: 'Microsoft.app/environments'
-            }
-          }
+          { name: 'Microsoft.app/environments', properties: { serviceName: 'Microsoft.app/environments' } }
         ]
       }
     }]
-
     modelLocation: openAI_deploy_location
   }
 }
@@ -304,7 +300,7 @@ module storage './core/storage/storage-account.bicep' = {
     privateEndpointQueueName: 'pe-queue-${resourceNames.outputs.storageAccountName}'
     privateEndpointTableName: 'pe-table-${resourceNames.outputs.storageAccountName}'
     myIpAddress: myIpAddress
-    containers: ['data', 'batch-input', 'batch-output']
+    containers: ['data', 'batch-input', 'batch-output', 'patterns-index-data', 'compute-index-data']
     resourcesWithAccess: union([
       {
         resourceId: searchService.outputs.id
@@ -392,7 +388,6 @@ module keyVault './core/security/keyvault.bicep' = {
     privateEndpointName: 'pe-${resourceNames.outputs.keyVaultName}'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
     useRBAC: true
-    addRoleAssignments: addRoleAssignments
   }
 }
 
@@ -543,24 +538,28 @@ module openAI './core/ai/cognitive-services.bicep' = {
     location: openAI_deploy_location // this may be different than the other resources
     pe_location: location
     tags: tags
-    textEmbedding: {
-      DeploymentName: 'text-embedding'
-      ModelName: 'text-embedding-ada-002'
-      ModelVersion: '2'
-      DeploymentCapacity: 30
-    }
-    chatGpt_Standard: {
-      DeploymentName: 'gpt-35-turbo'
-      ModelName: 'gpt-35-turbo'
-      ModelVersion: '0125'
-      DeploymentCapacity: 100
-    }
-    chatGpt_Premium: {
-      DeploymentName: 'gpt-4o'
-      ModelName: 'gpt-4o'
-      ModelVersion: '2024-08-06'
-      DeploymentCapacity: 100
-    }
+    deployments: [
+      {
+        name: 'text-embedding'
+        model: { format: 'OpenAI', name: 'text-embedding-ada-002', version: '2' }
+        sku: { name: 'Standard', capacity: 30 }
+      }
+      {
+        name: 'text-embedding-large'
+        model: { format: 'OpenAI', name: 'text-embedding-3-large', version: '1' }
+        sku: { name: 'Standard', capacity: 30 }
+      }
+     {
+        name: 'gpt-35-turbo'
+        model: { format: 'OpenAI', name: 'gpt-35-turbo', version: '0125' }
+        sku: { name: 'Standard', capacity: 100 }
+      }
+      {
+        name: 'gpt-4o'
+        model: { format: 'OpenAI', name: 'gpt-4o', version: '2024-08-06' }
+        sku: { name: 'Standard', capacity: 100 }
+      } 
+    ]
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'
     privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
     privateEndpointName: 'pe-${resourceNames.outputs.cogServiceName}'
@@ -607,12 +606,14 @@ module aiHub 'core/ai/ai-hub-secure.bicep' = if (deployAIHub) {
     storageAccountId: storage.outputs.id
 
     // add data scientist role to user and application
-    addRoleAssignments: addRoleAssignments
-    userObjectId: principalId
-    userObjectType: 'User'
-    //managedIdentityResourceId: identity.outputs.managedIdentityId
-    managedIdentityPrincipalId: identity.outputs.managedIdentityPrincipalId
-    managedIdentityType: 'ServicePrincipal'
+    hubIdentityResourceId: identity.outputs.managedIdentityId
+
+    // // for agents
+    // subnetId: vnet.outputs.allSubnets[2].id
+
+    // private endpoint
+    privateEndpointName: 'pe-${resourceNames.outputs.aiHubName}'
+    privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
   }
 }
 
@@ -627,14 +628,10 @@ module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
     tags: tags
     aiHubId: aiHub.outputs.id
     // dependent resources
-    // TODO:  capabilityHostName: capabilityHostName
-    // TODO:  acsConnectionName: aiHub.outputs.acsConnectionName
-    // TODO:  aoaiConnectionName: aiHub.outputs.aoaiConnectionName
-    // TODO:  hubIdentityResourceId: identity.outputs.managedIdentityId
-    capabilityHostName: ''
-    acsConnectionName: ''
-    aoaiConnectionName: ''
-    hubIdentityResourceId: ''
+    capabilityHostName: 'caphost1'
+    acsConnectionName: aiHub.outputs.acsConnectionName
+    aoaiConnectionName: aiHub.outputs.aoaiConnectionName
+    hubIdentityResourceId: identity.outputs.managedIdentityId
   }
 }
 
@@ -657,10 +654,7 @@ module allDnsZones './core/networking/all-zones.bicep' = if (createDnsZones) {
     storageQueuePrivateEndpointName: storage.outputs.privateEndpointQueueName
     storageTablePrivateEndpointName: storage.outputs.privateEndpointTableName
     appInsightsPrivateEndpointName: logAnalytics.outputs.privateEndpointName
-    
-    // TODO: hubPrivateEndpointName: aiHub.outputs.privateEndpointName
-    hubPrivateEndpointName: ''
-
+    hubPrivateEndpointName: aiHub.outputs.privateEndpointName
     defaultAcaDomain: managedEnvironment.outputs.defaultDomain
     acaStaticIp: managedEnvironment.outputs.staticIp
   }
@@ -680,20 +674,15 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
     appSubnetId: vnet.outputs.subnet2ResourceId
     tags: tags
     publicAccessEnabled: publicAccessEnabled
-    // TODO: privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
-    // TODO: privateEndpointName: 'pe-${resourceNames.outputs.caManagedEnvName}'
     containerAppEnvironmentWorkloadProfiles: containerAppEnvironmentWorkloadProfiles
+    // privateEndpointSubnetId: vnet.outputs.subnet1ResourceId
+    // privateEndpointName: 'pe-${resourceNames.outputs.caManagedEnvName}'
   }
 }
 
-// Applications use managed identity to access resources, keys are not needed but kept for future reference
-// var accessKeys = [
-//   { name: 'AOAIStandardServiceKey', secretRef: 'aikey' }
-//   { name: 'AzureDocumentIntelligenceKey', secretRef: 'docintellikey' }
-//   { name: 'AzureAISearchKey', secretRef: 'searchkey' }
-//   { name: 'CosmosDbKey', secretRef: 'cosmos' }
-// ]
-
+// --------------------------------------------------------------------------------------------------------------
+// -- API Container App -----------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 var apiTargetPort = 8080
 var apiSettings = [
   { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
@@ -738,6 +727,9 @@ module containerAppAPI './core/host/containerappstub.bicep' = {
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
+// --------------------------------------------------------------------------------------------------------------
+// -- Batch Container App (optional) ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 var batchTargetPort = 8080
 var batchSettings = union(apiSettings, [
   { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
@@ -778,6 +770,9 @@ module containerAppBatch './core/host/containerappstub.bicep' = if (deployBatchA
   dependsOn: createDnsZones ? [allDnsZones, containerRegistry] : [containerRegistry]
 }
 
+// --------------------------------------------------------------------------------------------------------------
+// -- UI Container App (optional) -------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 var uiSettings = union(apiSettings, [
   { name: 'AOAIEmbeddingsDeployment', value: 'text-embedding' }
   { name: 'AzureSearchServiceEndpoint', value: searchService.outputs.endpoint }
@@ -796,8 +791,8 @@ var uiSettings = union(apiSettings, [
   // "AzureSearchIndexName": "vector-<value>-indexer",
 ])
 
-module ui_app './core/host/containerappstub.bicep' = {
-  name: 'ui-app${deploymentSuffix}'
+module containerAppUI './core/host/containerappstub.bicep' = if (deployUIApp) {
+  name: 'ca-ui-stub${deploymentSuffix}'
   params: {
     tags: union(tags, { 'azd-service-name': 'ui' })
     appName: resourceNames.outputs.containerAppUIName
@@ -825,44 +820,56 @@ module ui_app './core/host/containerappstub.bicep' = {
 // -- Outputs ---------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
 output SUBSCRIPTION_ID string = subscription().subscriptionId
-output AZURE_TENANT_ID string = tenant().tenantId
-output USER_ASSIGNED_IDENTITY_ID string = identity.outputs.managedIdentityId
+output TENANT_ID string = tenant().tenantId
+output RESOURCE_GROUP_NAME string = resourceGroupName
+output APP_IDENTITY_NAME string = identity.outputs.managedIdentityName
+output APP_IDENTITY_ID string = identity.outputs.managedIdentityId
+output RESOURCE_TOKEN string = resourceToken
+
 output ACR_NAME string = containerRegistry.outputs.name
-output ACR_URL string = containerRegistry.outputs.loginServer
-output AI_ID string = openAI.outputs.id
-output AI_ENDPOINT string = openAI.outputs.endpoint
+output ACR_ENDPOINT string = containerRegistry.outputs.loginServer
+
+output AZURE_OPENAI_ID string = openAI.outputs.id
+output AZURE_OPENAI_ENDPOINT string = openAI.outputs.endpoint
+output AZURE_OPENAI_DEPLOYMENTS array = openAI.outputs.deployments
+output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = openAI.outputs.deployments[1].name
+output AZURE_OPENAI_EMBEDDING_MODEL string = openAI.outputs.deployments[1].model.name
+
 output AI_HUB_ID string = deployAIHub ? aiHub.outputs.id : ''
 output AI_HUB_NAME string = deployAIHub ? aiHub.outputs.name : ''
-output AI_PROJECT_NAME string = resourceNames.outputs.aiHubProjectName
-output AI_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output API_CONTAINER_APP_FQDN string = containerAppAPI.outputs.fqdn
-output API_CONTAINER_APP_NAME string = containerAppAPI.outputs.name
-output API_KEY string = apiKeyValue
-output AZURE_CONTAINER_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
-output AZURE_RESOURCE_GROUP string = resourceGroupName
+output AI_PROJECT_NAME string = deployAIHub ? resourceNames.outputs.aiHubProjectName : ''
+
+output AZURE_SEARCH_ID string = searchService.outputs.id
+output AZURE_SEARCH_ENDPOINT string = searchService.outputs.endpoint
+
+output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
+output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
+
+output CONTAINER_APP_API_NAME string = containerAppAPI.outputs.name
+output CONTAINER_APP_API_FQDN string = containerAppAPI.outputs.fqdn
+
+output CONTAINER_APP_BATCH_NAME string = deployBatchApp ? containerAppBatch.outputs.name : ''
+output CONTAINER_APP_BATCH_FQDN string = deployBatchApp ? containerAppBatch.outputs.fqdn : ''
+
+output CONTAINER_APP_UI_NAME string = deployUIApp ? containerAppUI.outputs.name : ''
+output CONTAINER_APP_UI_FQDN string = deployUIApp ? containerAppUI.outputs.fqdn : ''
+
 output COSMOS_CONTAINER_NAME string = uiChatContainerName
 output COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 output COSMOS_ENDPOINT string = cosmos.outputs.endpoint
+
+output DOCUMENT_INTELLIGENCE_ID string = documentIntelligence.outputs.id
 output DOCUMENT_INTELLIGENCE_ENDPOINT string = documentIntelligence.outputs.endpoint
-output MANAGED_ENVIRONMENT_ID string = managedEnvironment.outputs.id
-output MANAGED_ENVIRONMENT_NAME string = managedEnvironment.outputs.name
-output RESOURCE_TOKEN string = resourceToken
-output STORAGE_ACCOUNT_BATCH_IN_CONTAINER string = storage.outputs.containerNames[1].name
-output STORAGE_ACCOUNT_BATCH_OUT_CONTAINER string = storage.outputs.containerNames[2].name
-output STORAGE_ACCOUNT_CONTAINER string = storage.outputs.containerNames[0].name
+
+output STORAGE_ACCOUNT_ID string = storage.outputs.id
 output STORAGE_ACCOUNT_NAME string = storage.outputs.name
+output STORAGE_ACCOUNT_ENDPOINT string = 'https://${storage.outputs.name}.blob.${environment().suffixes.storage}'
+output STORAGE_ACCOUNT_CONTAINER_DATA string = storage.outputs.containerNames[0].name
+output STORAGE_ACCOUNT_CONTAINER_BATCH_IN string = storage.outputs.containerNames[1].name
+output STORAGE_ACCOUNT_CONTAINER_BATCH_OUT string = storage.outputs.containerNames[2].name
+output STORAGE_ACCOUNT_CONTAINER_PATTERNS_INDEX string = storage.outputs.containerNames[3].name
+output STORAGE_ACCOUNT_CONTAINER_COMPUTE_INDEX string = storage.outputs.containerNames[4].name
+
 output VNET_CORE_ID string = vnet.outputs.vnetResourceId
 output VNET_CORE_NAME string = vnet.outputs.vnetName
 output VNET_CORE_PREFIX string = vnet.outputs.vnetAddressPrefix
-
-output AZURE_OPENAI_ENDPOINT string = openAI.outputs.endpoint
-// TODO: output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = openAI.outputs.textEmbeddings[1].name
-// TODO: output AZURE_OPENAI_EMBEDDING_MODEL string = openAI.outputs.textEmbeddings[1].model.name
-output AZURE_SEARCH_ENDPOINT string = searchService.outputs.endpoint
-output AZURE_STORAGE_ENDPOINT string = 'https://${storage.outputs.name}.blob.${environment().suffixes.storage}'
-output AZURE_STORAGE_CONNECTION_STRING string = 'ResourceId=${storage.outputs.id}'
-output AZURE_PATTERNS_INDEX_STORAGE_CONTAINER string = storage.outputs.containerNames[3].name
-output AZURE_COMPUTE_INDEX_STORAGE_CONTAINER string = storage.outputs.containerNames[4].name
-output AZURE_STORAGE_ID string = storage.outputs.id

@@ -69,12 +69,12 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
             networkSecurityGroup: {
               id: networkSecurityGroupId
             }
-            delegations: [ 
+            delegations: [
               {
-                name: 'environments'
-                properties: { serviceName: 'Microsoft.App/environments' }
-              } 
-            ] 
+                name: 'Microsoft.app/environments'
+                properties: { serviceName: 'Microsoft.app/environments' }
+              }
+            ]
           }
         }
       ],
@@ -93,6 +93,7 @@ resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-01-01' = if (
 
 output vnetResourceId string = useExistingResource ? existingVirtualNetwork.id : newVirtualNetwork.id
 output vnetName string = useExistingResource ? existingVirtualNetwork.name : newVirtualNetwork.name
-output vnetAddressPrefix string = useExistingResource ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0] :  newVirtualNetwork.properties.addressSpace.addressPrefixes[0]
+output vnetAddressPrefix string = useExistingResource ? existingVirtualNetwork.properties.addressSpace.addressPrefixes[0] : newVirtualNetwork.properties.addressSpace.addressPrefixes[0]
 output subnet1ResourceId string = useExistingResource ? existingVirtualNetwork::subnet1.id : newVirtualNetwork::subnet1.id
 output subnet2ResourceId string = useExistingResource ? existingVirtualNetwork::subnet2.id : newVirtualNetwork::subnet2.id
+output allSubnets array = useExistingResource ? existingVirtualNetwork.properties.subnets : newVirtualNetwork.properties.subnets
