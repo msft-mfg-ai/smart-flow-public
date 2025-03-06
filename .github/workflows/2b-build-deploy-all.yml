@@ -158,7 +158,7 @@ jobs:
   deploy-api:
     name: Deploy API ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
     uses: ./.github/workflows/template-aca-deploy.yml
-    if: ${{ inputs.runBuildDeployAPI }}
+    if: inputs.runBuildDeployAPI
     needs:
       - build-all
       - template-env
@@ -176,7 +176,7 @@ jobs:
   deploy-batch:
     name: Deploy Batch ${{ inputs.deployEnvironment }} ${{ inputs.deployType }}
     uses: ./.github/workflows/template-aca-deploy.yml
-    if: ${{ inputs.runBuildDeployBatch }}
+    if: inputs.runBuildDeployBatch
     needs:
       - build-all
       - template-env
