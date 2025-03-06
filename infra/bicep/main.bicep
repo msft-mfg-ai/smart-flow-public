@@ -1,8 +1,4 @@
 
-
-// LLL 03-05: close, but I still need to address the TODO items, and also evaluate ai-hub-secure.bicep, then test it as I haven't run this yet...!
-
-
 // --------------------------------------------------------------------------------------------------------------
 // Main bicep file that deploys EVERYTHING for the application, with optional parameters for existing resources.
 // --------------------------------------------------------------------------------------------------------------
@@ -52,12 +48,19 @@ param existingVnetResourceGroupName string = ''
 param vnetPrefix string = '10.2.0.0/16'
 @description('If new VNET, this is the Subnet name for the private endpoints')
 param subnet1Name string = ''
-@description('If new VNET, this is the Subnet addresses for the private endpoints, i.e. 10.2.0.0/26') //Provided subnet must have a size of at least /23
+@description('If new VNET, this is the Subnet addresses for the private endpoints, i.e. 10.2.0.0/23') //Provided subnet must have a size of at least /23
 param subnet1Prefix string = '10.2.0.0/23'
 @description('If new VNET, this is the Subnet name for the application')
 param subnet2Name string = ''
 @description('If new VNET, this is the Subnet addresses for the application, i.e. 10.2.2.0/23') // Provided subnet must have a size of at least /23
 param subnet2Prefix string = '10.2.2.0/23'
+@description('If new VNET, this is the Subnet name for the agents')
+param subnet3Name string = ''
+@description('If new VNET, this is the Subnet addresses for the agents, i.e. 10.2.4.0/24')
+param subnet3Prefix string = '10.2.4.0/24'
+
+@description('If you provide this is will be used instead of creating a new NSG')
+param existingNSGName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?
@@ -211,16 +214,6 @@ module resourceNames 'resourcenames.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 // -- VNET ------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------
-module appSubnetNSG './core/networking/network-security-group.bicep' = {
-  name: 'nsg'
-  params: {
-    existingVnetName: existingVnetName
-    nsgName: '${resourceNames.outputs.vnet_Name}-${subnet2Name}-nsg-${location}'
-    location: location
-    myIpAddress: myIpAddress
-  }
-}
-
 module vnet './core/networking/vnet.bicep' = {
   name: 'vnet${deploymentSuffix}'
   params: {
@@ -228,22 +221,16 @@ module vnet './core/networking/vnet.bicep' = {
     existingVirtualNetworkName: existingVnetName
     existingVnetResourceGroupName: existingVnetResourceGroupName
     newVirtualNetworkName: resourceNames.outputs.vnet_Name
-    networkSecurityGroupId: appSubnetNSG.outputs.id
+    myIpAddress: myIpAddress
     vnetAddressPrefix: vnetPrefix
     subnet1Name: !empty(subnet1Name) ? subnet1Name : resourceNames.outputs.vnetPeSubnetName
     subnet1Prefix: subnet1Prefix
     subnet2Name: !empty(subnet2Name) ? subnet2Name : resourceNames.outputs.vnetAppSubnetName
     subnet2Prefix: subnet2Prefix
-    otherSubnets: [{
-      name: 'snet-agents'
-      properties: {
-        addressPrefix: '10.2.4.0/24'
-        delegations: [
-          { name: 'Microsoft.app/environments', properties: { serviceName: 'Microsoft.app/environments' } }
-        ]
-      }
-    }]
+    subnet3Name: !empty(subnet3Name) ? subnet3Name : resourceNames.outputs.vnetAgentSubnetName
+    subnet3Prefix: subnet3Prefix
     modelLocation: openAI_deploy_location
+    deploymentSuffix: deploymentSuffix
   }
 }
 
@@ -348,7 +335,6 @@ module appIdentityRoleAssignments './core/iam/role-assignments.bicep' = if (addR
     storageAccountName: storage.outputs.name
     keyvaultName: keyVault.outputs.name
     aiServicesName: openAI.outputs.name
-    documentIntelligenceName: documentIntelligence.outputs.name
     aiSearchName: searchService.outputs.name
     cosmosName: cosmos.outputs.name
   }
@@ -363,7 +349,6 @@ module adminUserRoleAssignments './core/iam/role-assignments.bicep' = if (addRol
     storageAccountName: storage.outputs.name
     keyvaultName: keyVault.outputs.name
     aiServicesName: openAI.outputs.name
-    documentIntelligenceName: documentIntelligence.outputs.name
     aiSearchName: searchService.outputs.name
     cosmosName: cosmos.outputs.name
   }
@@ -552,12 +537,12 @@ module openAI './core/ai/cognitive-services.bicep' = {
      {
         name: 'gpt-35-turbo'
         model: { format: 'OpenAI', name: 'gpt-35-turbo', version: '0125' }
-        sku: { name: 'Standard', capacity: 100 }
+        sku: { name: 'Standard', capacity: 30 }
       }
       {
         name: 'gpt-4o'
         model: { format: 'OpenAI', name: 'gpt-4o', version: '2024-08-06' }
-        sku: { name: 'Standard', capacity: 100 }
+        sku: { name: 'Standard', capacity: 30 }
       } 
     ]
     publicNetworkAccess: publicAccessEnabled ? 'enabled' : 'disabled'

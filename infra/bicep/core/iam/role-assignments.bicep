@@ -23,8 +23,8 @@ param aiSearchName string = ''
 param aiServicesName string = ''
 param cosmosName string = ''
 param keyvaultName string = ''
-param documentIntelligenceName string = ''
 param aiHubName string = ''
+// param documentIntelligenceName string = ''
 
 // ----------------------------------------------------------------------------------------------------
 var roleDefinitions = loadJsonContent('../../data/roleDefinitions.json')
@@ -34,8 +34,8 @@ var addSearchRoles = !empty(aiSearchName)
 var addCogServicesRoles = !empty(aiServicesName)
 var addCosmosRoles = !empty(cosmosName)
 var addKeyVaultRoles = !empty(keyvaultName)
-var addDocumentIntelligenceRoles = !empty(documentIntelligenceName)
 var addAIHubRoles = !empty(aiHubName)
+// var addDocumentIntelligenceRoles = !empty(documentIntelligenceName)
 
 // ----------------------------------------------------------------------------------------------------
 // Registry Roles
@@ -197,36 +197,7 @@ resource cosmos_Role_DataContributor 'Microsoft.DocumentDB/databaseAccounts/sqlR
 }
 
 // ----------------------------------------------------------------------------------------------------
-// Document Intelligence Roles
-// ----------------------------------------------------------------------------------------------------
-resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (addDocumentIntelligenceRoles) {
-  name: documentIntelligenceName
-}
-
-resource documentIntelligence_Role_OpenAIContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addDocumentIntelligenceRoles) {
-  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId) : guid(documentIntelligence.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
-  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : documentIntelligence
-  properties: {
-    principalId: identityPrincipalId
-    principalType: principalType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
-    description: 'Permission for ${principalType} ${identityPrincipalId} to use the Document Intelligence cognitive services'
-  }
-}
-resource documentIntelligence_Role_User 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addDocumentIntelligenceRoles) {
-  name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId) : guid(documentIntelligence.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId)
-  scope: grantRolesAtResourceGroupLevel ? resourceGroup() : documentIntelligence
-  properties: {
-    principalId: identityPrincipalId
-    principalType: principalType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesUserRoleId)
-    description: 'Permission for ${principalType} ${identityPrincipalId} to use the Document Intelligence'
-  }
-}
-
-
-// ----------------------------------------------------------------------------------------------------
-// Document Intelligence Roles
+// Key Vault Roles
 // ----------------------------------------------------------------------------------------------------
 resource keyvault 'Microsoft.KeyVault/vaults@2023-02-01' existing = if (addKeyVaultRoles) {
   name: keyvaultName
@@ -290,3 +261,31 @@ resource aiHub_Role_Administrator 'Microsoft.Authorization/roleAssignments@2022-
     description: 'Permission for ${principalType} ${identityPrincipalId} to administer ${aiHubName}'
   }
 }
+
+// // ----------------------------------------------------------------------------------------------------
+// // Document Intelligence Roles -- this is duplicating what's set up in OpenAI Roles... remove it?
+// // ----------------------------------------------------------------------------------------------------
+// resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (addDocumentIntelligenceRoles) {
+//   name: documentIntelligenceName
+// }
+
+// resource documentIntelligence_Role_OpenAIContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addDocumentIntelligenceRoles) {
+//   name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId) : guid(documentIntelligence.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
+//   scope: grantRolesAtResourceGroupLevel ? resourceGroup() : documentIntelligence
+//   properties: {
+//     principalId: identityPrincipalId
+//     principalType: principalType
+//     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesOpenAIContributorRoleId)
+//     description: 'Permission for ${principalType} ${identityPrincipalId} to use the Document Intelligence cognitive services'
+//   }
+// }
+// resource documentIntelligence_Role_User 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (addDocumentIntelligenceRoles) {
+//   name: grantRolesAtResourceGroupLevel ? guid(resourceGroup().id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId) : guid(documentIntelligence.id, identityPrincipalId, roleDefinitions.openai.cognitiveServicesUserRoleId)
+//   scope: grantRolesAtResourceGroupLevel ? resourceGroup() : documentIntelligence
+//   properties: {
+//     principalId: identityPrincipalId
+//     principalType: principalType
+//     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.openai.cognitiveServicesUserRoleId)
+//     description: 'Permission for ${principalType} ${identityPrincipalId} to use the Document Intelligence'
+//   }
+// }

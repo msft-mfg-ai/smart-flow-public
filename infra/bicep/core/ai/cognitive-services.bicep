@@ -65,6 +65,7 @@ resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01
 
 module privateEndpoint '../networking/private-endpoint.bicep' = if (empty(existing_CogServices_Name) && !empty(privateEndpointSubnetId)) {
   name: '${name}-private-endpoint'
+  dependsOn: deployment
   params: {
     location: pe_location
     privateEndpointName: privateEndpointName

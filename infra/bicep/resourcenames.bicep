@@ -9,6 +9,8 @@ param environmentName string = 'dev'
 @description('Optional resource token to ensure uniqueness - leave blank if desired')
 param resourceToken string = ''
 
+param location string = resourceGroup().location
+
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 var sanitizedEnvironment = toLower(environmentName)
 var sanitizedAppNameWithDashes = replace(replace(toLower(applicationName), ' ', ''), '_', '')
@@ -47,9 +49,12 @@ output caManagedIdentityName string       = toLower('${sanitizedAppName}-${resou
 output kvManagedIdentityName string       = toLower('${sanitizedAppName}-${resourceAbbreviations.keyVaultVaults}-${resourceAbbreviations.managedIdentityUserAssignedIdentities}-${sanitizedEnvironment}${resourceToken}')
 output userAssignedIdentityName string    = toLower('${sanitizedAppName}-app-${resourceAbbreviations.managedIdentityUserAssignedIdentities}')
 
-output vnet_Name string                   = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}')
+var vnetName                              = toLower('${sanitizedAppName}-${resourceAbbreviations.networkVirtualNetworks}-${sanitizedEnvironment}${resourceTokenWithDash}')
+output vnet_Name string                   = vnetName
 output vnetAppSubnetName string           = toLower('snet-app')
 output vnetPeSubnetName string            = toLower('snet-prv-endpoint')
+output vnetAgentSubnetName string         = toLower('snet-agents')
+output nsgName string                     = toLower('${vnetName}-${resourceAbbreviations.networkNetworkSecurityGroups}-${location}')
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Container Registry, Key Vaults and Storage Account names are only alpha numeric characters limited length
