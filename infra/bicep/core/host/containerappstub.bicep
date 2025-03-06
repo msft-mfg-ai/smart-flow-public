@@ -59,7 +59,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           identity: userIdentity.id
-          server: '${registryName}.azurecr.io'
+          server: registryName
         }
       ]
       secrets: [for secret in items(secrets): {

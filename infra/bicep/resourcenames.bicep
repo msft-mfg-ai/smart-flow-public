@@ -58,6 +58,8 @@ output nsgName string                     = toLower('${vnetName}-${resourceAbbre
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Container Registry, Key Vaults and Storage Account names are only alpha numeric characters limited length
-output ACR_Name string                    = take('${sanitizedAppName}${resourceAbbreviations.containerRegistryRegistries}${sanitizedEnvironment}${resourceTokenWithoutDash}', 50)
+var acrName                               = take('${sanitizedAppName}${resourceAbbreviations.containerRegistryRegistries}${sanitizedEnvironment}${resourceTokenWithoutDash}', 50)
+output ACR_Name string                    = acrName
+output ACR_FQDN string                    = '${acrName}.azurecr.io'
 output keyVaultName string                = take('${sanitizedAppName}${resourceAbbreviations.keyVaultVaults}${sanitizedEnvironment}${resourceTokenWithoutDash}', 24)
 output storageAccountName string          = take('${sanitizedAppName}${resourceAbbreviations.storageStorageAccounts}${sanitizedEnvironment}${resourceTokenWithoutDash}', 24)
