@@ -83,16 +83,16 @@ jobs:
       APP_NAME_NO_DASHES: ${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}
       RESOURCE_GROUP_NAME: '${{ vars.RESOURCEGROUP_PREFIX }}-${{ inputs.deployEnvironment }}'
 
-      ACR_NAME: '${{ vars.APP_NAME_NO_DASHES }}cr${{ inputs.deployEnvironment }}'
+      ACR_NAME: '${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}cr${{ inputs.deployEnvironment }}'
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
-      CONTAINER_APP_ENV_NAME: '${{ vars.APP_NAME_NO_DASHES }}-cae-${{ inputs.deployEnvironment }}'
+      CONTAINER_APP_ENV_NAME: '${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}-cae-${{ inputs.deployEnvironment }}'
 
-      API_CONTAINER_APP_NAME: '${{ vars.APP_NAME_NO_DASHES }}-ca-api-${{ inputs.deployEnvironment }}'
+      API_CONTAINER_APP_NAME: '${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}-ca-api-${{ inputs.deployEnvironment }}'
       API_APP_PATH: ${{ env.API_APP_PATH }}
       API_ACR_APP_NAME: ${{ env.API_ACR_APP_NAME }}
       API_PORT: ${{ env.API_PORT }}
 
-      BATCH_CONTAINER_APP_NAME: '${{ vars.APP_NAME_NO_DASHES }}-ca-batch-${{ inputs.deployEnvironment }}'
+      BATCH_CONTAINER_APP_NAME: '${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}-ca-batch-${{ inputs.deployEnvironment }}'
       BATCH_APP_PATH: ${{ env.BATCH_APP_PATH }}
       BATCH_ACR_APP_NAME: ${{ env.BATCH_ACR_APP_NAME }}
       BATCH_PORT: ${{ env.BATCH_PORT }}
