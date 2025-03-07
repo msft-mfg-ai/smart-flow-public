@@ -180,7 +180,7 @@ jobs:
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
-      deployBatchApp: false # ${{ inputs.runBuildDeployBatch }}
+      deployBatchApp: false # use parm inputs.runBuildDeployBatch
       deployUIApp: ${{ inputs.runDeployUI }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
 
@@ -202,7 +202,7 @@ jobs:
       API_APP_PATH: ${{ needs.template-env.outputs.API_APP_PATH }}
       API_ACR_APP_NAME: ${{ needs.template-env.outputs.API_ACR_APP_NAME }}
 
-      BUILD_DEPLOY_BATCH: false # ${{ inputs.runBuildDeployBatch }}
+      BUILD_DEPLOY_BATCH: false # use parm inputs.runBuildDeployBatch
       BATCH_APP_PATH: ${{ needs.template-env.outputs.BATCH_APP_PATH }}
       BATCH_ACR_APP_NAME: ${{ needs.template-env.outputs.BATCH_ACR_APP_NAME }}
 

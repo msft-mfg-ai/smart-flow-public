@@ -39,6 +39,22 @@ parameters:
       - Validation
       - Complete
     default: Incremental
+  - name: apps
+    displayName: Which Apps to build and deploy?
+    type: string
+    values:
+      - API-UI
+      - API
+      - UI
+      - BATCH
+      - API-BATCH
+      - API-BATCH-UI
+    default: 'API-UI'
+  - name: parameterFileName
+    displayName: 'Bicep Parameter File:'
+    type: string
+    default: 'main.azdo.bicepparam'
+    
   - name: createResourceGroup
     displayName: Create Resource Group?
     type: boolean
@@ -51,14 +67,14 @@ parameters:
     displayName: Create DNS Zones?
     type: boolean
     default: true
+  - name: deployAIHub
+    displayName: Deploy AI Hub?
+    type: boolean
+    default: true
   - name: addRoleAssignments
     displayName: Add Role Assignments?
     type: boolean
     default: true
-  - name: runGHASScan
-    displayName: Run GHAS Scan?
-    type: boolean
-    default: false
   - name: runMSDevSecOpsScan
     displayName: Run MS DevSecOps Scan?
     type: boolean
@@ -75,21 +91,33 @@ stages:
       - template: pipes/infra-only-pipe.yml
         parameters:
           environments: ['${{ parameters.deployToEnvironment }}']
-          runMSDevSecOpsScan: ${{ parameters.runMSDevSecOpsScan }}
-          runGHASScan: ${{ parameters.runGHASScan }}
+          templateFolderName: 'infra/bicep'
+          templateFileName: 'main.bicep'
+          parameterFileName: ${{ parameters.parameterFileName }}
           singleEnvironment: 'true'
           createResourceGroup: ${{ parameters.createResourceGroup }}
           publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
           createDnsZones: ${{ parameters.createDnsZones }}
+          deployAIHub: ${{ parameters.deployAIHub }}
+          deployBatchApp: ${{ contains(parameters.apps, 'BATCH') }}
+          deployUIApp: ${{ contains(parameters.apps, 'UI') }}
           addRoleAssignments: ${{ parameters.addRoleAssignments }}
+          runMSDevSecOpsScan: ${{ parameters.runMSDevSecOpsScan }}
+          runGHASScan: false
 
   - ${{ if eq(parameters.deployToEnvironment, 'DEV-QA-PROD') }}:
       - template: pipes/infra-only-pipe.yml
         parameters:
           environments: ['DEV', 'QA', 'PROD']
-          runMSDevSecOpsScan: ${{ parameters.runMSDevSecOpsScan }}
-          runGHASScan: ${{ parameters.runGHASScan }}
+          templateFolderName: 'infra/bicep'
+          templateFileName: 'main.bicep'
+          parameterFileName: ${{ parameters.parameterFileName }}
           createResourceGroup: ${{ parameters.createResourceGroup }}
           publicAccessEnabled: ${{ parameters.publicAccessEnabled }}
           createDnsZones: ${{ parameters.createDnsZones }}
+          deployAIHub: ${{ parameters.deployAIHub }}
+          deployBatchApp: ${{ contains(parameters.apps, 'BATCH') }}
+          deployUIApp: ${{ contains(parameters.apps, 'UI') }}
           addRoleAssignments: ${{ parameters.addRoleAssignments }}
+          runMSDevSecOpsScan: ${{ parameters.runMSDevSecOpsScan }}
+          runGHASScan: false

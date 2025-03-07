@@ -56,11 +56,6 @@ on:
         required: true
         default: true
         type: boolean
-      runBuildDeployBatch:
-        description: Build and Deploy Batch?
-        required: true
-        default: false
-        type: boolean
       runDeployUI:
         description: Deploy Sample UI?
         required: true
@@ -70,6 +65,13 @@ on:
         description: Deploy AI Hub?
         type: boolean
         default: true
+
+      # GH Actions restrict you to only 10 inputs... so will have to refactor this to use it!
+      # runBuildDeployBatch:
+      #   description: Build and Deploy Batch?
+      #   required: true
+      #   default: false
+      #   type: boolean
           
 jobs:
   Deploy_Bicep:
@@ -92,6 +94,6 @@ jobs:
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
-      deployBatchApp: ${{ inputs.runBuildDeployBatch }}
+      deployBatchApp: false # use parm inputs.runBuildDeployBatch
       deployUIApp: ${{ inputs.runDeployUI }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}

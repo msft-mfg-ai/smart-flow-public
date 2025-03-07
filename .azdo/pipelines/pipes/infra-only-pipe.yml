@@ -25,6 +25,8 @@ parameters:
     default: true
   - name: deployBatchApp
     default: true
+  - name: deployUIApp
+    default: true
   - name: addRoleAssignments
     default: true
   - name: runGHASScan
@@ -68,5 +70,6 @@ stages:
               createDnsZones: ${{ parameters.createDnsZones }}
               deployAIHub: ${{ parameters.deployAIHub }}
               deployBatchApp: ${{ parameters.deployBatchApp }}
+              deployUIApp: ${{ parameters.deployUIApp }}
               addRoleAssignments: ${{ parameters.addRoleAssignments }}
               deploymentMode: ${{ parameters.deploymentMode }}

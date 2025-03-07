@@ -148,7 +148,7 @@ param searchServiceSkuName string = 'basic'
 param apiImageName string = ''
 param batchImageName string = ''
 param uiContainerRegistry string = '' // 'ghcr.io'
-param uiImageName string = ''         // '/msft-mfg-ai/smart-flow-ui/smartflowui:latest'
+param uiImageName string = '' // '/msft-mfg-ai/smart-flow-ui/smartflowui:latest'
 
 // --------------------------------------------------------------------------------------------------------------
 // Other deployment switches
@@ -669,11 +669,11 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
 // --------------------------------------------------------------------------------------------------------------
 var apiTargetPort = 8080
 var apiSettings = [
-  { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
+  { name: 'ApiKey', secretRef: 'apikey' }
   { name: 'AnalysisApiKey', secretRef: 'apikey' }
+  { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
   { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
   { name: 'AOAIStandardChatGptDeployment', value: 'gpt-4o' }
-  { name: 'ApiKey', secretRef: 'apikey' }
   { name: 'PORT', value: '${apiTargetPort}' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: logAnalytics.outputs.appInsightsConnectionString }
   { name: 'AZURE_CLIENT_ID', value: identity.outputs.managedIdentityClientId }
@@ -784,7 +784,7 @@ module containerAppUI './core/host/containerappstub.bicep' = if (deployUIApp) {
     managedEnvironmentName: managedEnvironment.outputs.name
     managedEnvironmentRg: managedEnvironment.outputs.resourceGroupName
     workloadProfileName: appContainerAppEnvironmentWorkloadProfileName
-    registryName: uiContainerRegistry
+    registryName: uiContainerRegistry != '' ? uiContainerRegistry : resourceNames.outputs.ACR_FQDN
     imageName: uiImageName
     userAssignedIdentityName: identity.outputs.managedIdentityName
     deploymentSuffix: deploymentSuffix
