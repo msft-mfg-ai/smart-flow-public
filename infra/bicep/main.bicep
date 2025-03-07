@@ -611,7 +611,7 @@ module aiProject 'core/ai/ai-hub-project.bicep' = if (deployAIHub) {
     capabilityHostName: 'caphost1'
     acsConnectionName: aiHub.outputs.acsConnectionName
     aoaiConnectionName: aiHub.outputs.aoaiConnectionName
-    hubIdentityResourceId: identity.outputs.managedIdentityId
+    managedIdentityId: identity.outputs.managedIdentityId
   }
 }
 

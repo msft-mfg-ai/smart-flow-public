@@ -35,8 +35,10 @@ param aiServicesId string
 @description('Target endpoint for the Azure AI Services resource to link to the Azure AI Hub.')
 param aiServicesTarget string
 
-@description('The resource ID of the Microsoft Entra ID identity to use as hub identity. When not provided system assigned identity is used.')
-param hubIdentityResourceId string = ''
+// @description('The resource ID of the Microsoft Entra ID identity to use as hub identity. When not provided system assigned identity is used.')
+// param hubIdentityResourceId string = ''
+@description('The resource ID of the Microsoft Entra ID identity to use as hub identity.')
+param managedIdentityId string = ''
 
 @description('Name AI Search resource')
 param aiSearchName string
@@ -57,7 +59,7 @@ param capabilityHostName string = 'caphost1'
 @description('Provide the IP address to allow access to the Azure Container Registry')
 param myIpAddress string = ''
 
-var useProvidedHubIdentity = !empty(hubIdentityResourceId)
+// var useProvidedHubIdentity = !empty(hubIdentityResourceId)
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' = {
   name: aiHubName
@@ -65,9 +67,13 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview'
   tags: tags
   kind: 'Hub'
   identity: {
-    type: useProvidedHubIdentity ? 'UserAssigned' : 'SystemAssigned'
-    userAssignedIdentities: useProvidedHubIdentity ? { '${hubIdentityResourceId}': {} } :  {}
+    type: 'UserAssigned'
+    userAssignedIdentities: { '${managedIdentityId}': {} }
   }
+  // identity: {
+  //   type: useProvidedHubIdentity ? 'UserAssigned' : 'SystemAssigned'
+  //   userAssignedIdentities: useProvidedHubIdentity ? { '${hubIdentityResourceId}': {} } :  {}
+  // }
   properties: {
     // organization
     friendlyName: aiHubFriendlyName
@@ -79,7 +85,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview'
     applicationInsights: applicationInsightsId
     containerRegistry: containerRegistryId
     //systemDatastoresAuthMode: 'identity'
-    primaryUserAssignedIdentity: hubIdentityResourceId
+    primaryUserAssignedIdentity: managedIdentityId
     
     // WARNING: these do not seem be allowed in @2024-10-01, but it's not stopping the deployment...
     ipAllowlist: empty(myIpAddress) ? [] : [myIpAddress]

@@ -29,8 +29,9 @@ param acsConnectionName string
 @description('Name for ACS connection.')
 param aoaiConnectionName string
 
-@description('The resource ID of the Microsoft Entra ID identity to use as hub identity. When not provided system assigned identity is used.')
-param hubIdentityResourceId string = ''
+//@description('The resource ID of the Microsoft Entra ID identity to use as hub identity. When not provided system assigned identity is used.')
+@description('The resource ID of the Microsoft Entra ID identity to use as hub identity.')
+param managedIdentityId string = ''
 
 //for constructing endpoint
 var subscriptionId = subscription().subscriptionId
@@ -47,16 +48,17 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
     ProjectConnectionString: projectConnectionString
   })
   identity: {
-    type: empty(hubIdentityResourceId) ? 'SystemAssigned' : 'UserAssigned'
-    userAssignedIdentities: empty(hubIdentityResourceId) ? {} : {
-      '${hubIdentityResourceId}': {}
-    }
+    type: 'UserAssigned'
+    userAssignedIdentities: { '${managedIdentityId}': {} }
+    // type: empty(hubIdentityResourceId) ? 'SystemAssigned' : 'UserAssigned'
+    // userAssignedIdentities: empty(hubIdentityResourceId) ? {} : { '${hubIdentityResourceId}': {}
+    // }
   }
   properties: {
     // organization
     friendlyName: aiProjectFriendlyName
     description: aiProjectDescription
-    primaryUserAssignedIdentity: hubIdentityResourceId
+    primaryUserAssignedIdentity: managedIdentityId
 
     // dependent resources
     hubResourceId: aiHubId
@@ -97,6 +99,6 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
 
 output aiProjectName string = aiProject.name
 output aiProjectResourceId string = aiProject.id
-output aiProjectPrincipalId string = empty(hubIdentityResourceId) ? aiProject.identity.principalId : aiProject.identity.userAssignedIdentities[hubIdentityResourceId].principalId
+output aiProjectPrincipalId string = empty(managedIdentityId) ? aiProject.identity.principalId : aiProject.identity.userAssignedIdentities[managedIdentityId].principalId
 output aiProjectWorkspaceId string = aiProject.properties.workspaceId
 output projectConnectionString string = aiProject.tags.ProjectConnectionString
