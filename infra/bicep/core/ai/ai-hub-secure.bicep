@@ -172,21 +172,23 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview'
   //   }
   // }
 
-  // Resource definition for the capability host
-  // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
-  resource capabilityHost 'capabilityHosts@2025-01-01-preview' = {
-    name: capabilityHostName
-    properties: {
-      // TODO: this doesn't work
-      // "code": "UserError",
-      // "message": "/subscriptions/0721e282-2773-4021-af16-e00641ed5e36/resourceGroups/rg-philips-emissions/providers/Microsoft.Network/virtualNetworks/philipsemissions-vnet-dev/subnets/snet-agents is invalid",
-      // customerSubnet: subnetId
-      capabilityHostKind: 'Agents'
-    }
-  }
-  dependsOn: [
-    aisearch
-  ]
+  // this is defined in the ai-hub-project.bicep file... 
+  // this is failing... do we need it here?
+  // // Resource definition for the capability host
+  // // Documentation: https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/workspaces/capabilityhosts?tabs=bicep
+  // resource capabilityHost 'capabilityHosts@2025-01-01-preview' = {
+  //   name: capabilityHostName
+  //   properties: {
+  //     // TODO: this doesn't work
+  //     // "code": "UserError",
+  //     // "message": "/subscriptions/0721e282-2773-4021-af16-e00641ed5e36/resourceGroups/rg-philips-emissions/providers/Microsoft.Network/virtualNetworks/philipsemissions-vnet-dev/subnets/snet-agents is invalid",
+  //     // customerSubnet: subnetId
+  //     capabilityHostKind: 'Agents'
+  //   }
+  // }
+  // dependsOn: [
+  //   aisearch
+  // ]
 }
 
 module hubPrivateEndpoint '../networking/private-endpoint.bicep' = if (!empty(privateEndpointSubnetId)) {

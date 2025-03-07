@@ -1,4 +1,3 @@
-
 // --------------------------------------------------------------------------------------------------------------
 // Main bicep file that deploys EVERYTHING for the application, with optional parameters for existing resources.
 // --------------------------------------------------------------------------------------------------------------
@@ -58,9 +57,6 @@ param subnet2Prefix string = '10.2.2.0/23'
 param subnet3Name string = ''
 @description('If new VNET, this is the Subnet addresses for the agents, i.e. 10.2.4.0/24')
 param subnet3Prefix string = '10.2.4.0/24'
-
-@description('If you provide this is will be used instead of creating a new NSG')
-param existingNSGName string = ''
 
 // --------------------------------------------------------------------------------------------------------------
 // Existing container registry?
@@ -670,7 +666,7 @@ module managedEnvironment './core/host/managedEnvironment.bicep' = {
 var apiTargetPort = 8080
 var apiSettings = [
   { name: 'ApiKey', secretRef: 'apikey' }
-  { name: 'AnalysisApiKey', secretRef: 'apikey' }
+  { name: 'AnalysisApiKey', secretRef: 'analysisapikey' }
   { name: 'AnalysisApiEndpoint', value: 'https://${resourceNames.outputs.containerAppAPIName}.${managedEnvironment.outputs.defaultDomain}' }
   { name: 'AOAIStandardServiceEndpoint', value: openAI.outputs.endpoint }
   { name: 'AOAIStandardChatGptDeployment', value: 'gpt-4o' }
@@ -705,6 +701,7 @@ module containerAppAPI './core/host/containerappstub.bicep' = {
       docintellikey: documentIntelligenceSecret.outputs.secretUri
       searchkey: searchSecret.outputs.secretUri
       apikey: apiKeySecret.outputs.secretUri
+      analysisapikey: apiKeySecret.outputs.secretUri
     }
     env: apiSettings
   }
@@ -748,6 +745,7 @@ module containerAppBatch './core/host/containerappstub.bicep' = if (deployBatchA
       docintellikey: documentIntelligenceSecret.outputs.secretUri
       searchkey: searchSecret.outputs.secretUri
       apikey: apiKeySecret.outputs.secretUri
+      analysisapikey: apiKeySecret.outputs.secretUri
     }
     env: batchSettings
   }
@@ -791,11 +789,12 @@ module containerAppUI './core/host/containerappstub.bicep' = if (deployUIApp) {
     env: uiSettings
     targetPort: 8080
     secrets: {
-      cosmos: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${cosmos.outputs.connectionStringSecretName}'
-      aikey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${openAI.outputs.cognitiveServicesKeySecretName}'
-      searchkey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${searchService.outputs.searchKeySecretName}'
-      docintellikey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/${documentIntelligence.outputs.keyVaultSecretName}'
-      apikey: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/secrets/api-key'
+      cosmos: cosmosSecret.outputs.secretUri
+      aikey: openAISecret.outputs.secretUri
+      docintellikey: documentIntelligenceSecret.outputs.secretUri
+      searchkey: searchSecret.outputs.secretUri
+      apikey: apiKeySecret.outputs.secretUri
+      analysisapikey: apiKeySecret.outputs.secretUri
     }
   }
 }
