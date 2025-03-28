@@ -1,6 +1,3 @@
-//using Azure.Storage.Blobs;
-//using Azure.Storage.Blobs.Models;
-
 using Azure.AI.OpenAI;
 using Azure;
 using Microsoft.SemanticKernel;
@@ -20,7 +17,9 @@ namespace Assistants.API.Core
 {
     internal static class ServiceCollectionExtensions
     {
-        private static readonly DefaultAzureCredential _defaultAzureCredential = new DefaultAzureCredential();
+        // this was changed slightly for issue addressed in AddAzureServices() method
+        // private static readonly DefaultAzureCredential _defaultAzureCredential = new DefaultAzureCredential();
+        private static DefaultAzureCredential _defaultAzureCredential = new();
 
         internal static IServiceCollection AddAgentLog(this IServiceCollection services, IConfiguration configuration)
         {
@@ -35,6 +34,15 @@ namespace Assistants.API.Core
 
         internal static IServiceCollection AddAzureServices(this IServiceCollection services, IConfiguration configuration)
         {
+            // For local Visual Studio based development, if you get this error:
+            //    Provided AAD token was issued by the authority [x] which is not trusted by this database account.
+            //    Please ensure the token has been issued by the AAD tenant(s) [y]
+            // You can change the tenant of your local user with this code by adding a
+            // secret named VisualStudioTenantId which contains your desired TenantId
+            if (!string.IsNullOrEmpty(configuration["VisualStudioTenantId"])) {
+                _defaultAzureCredential = new(new DefaultAzureCredentialOptions() { VisualStudioTenantId = configuration["VisualStudioTenantId"] });
+            }
+
             services.AddTransient<ContentService>();
             services.AddTransient<OcrClient>();
 

@@ -10,6 +10,10 @@ using System.ComponentModel;
 using System.Text;
 using Azure;
 using Assistant.Hub.Api.Assistants;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
+using MinimalApi.Services;
+using System.Diagnostics;
 
 namespace Assistant.Hub.Api.Services.Search;
 
@@ -52,6 +56,8 @@ public sealed class VectorSearchRetrievalPluginTool
 
         var key = ResolveKey(labelProperties);
         var searchClient = _searchClientFactory.GetOrCreateClient(toolDefinition.RAGSettings.RetrievalIndexName);
+
+        Debug.WriteLine($"Searching index {toolDefinition.RAGSettings.RetrievalIndexName} for key {key}...");
 
         //TODO: Handle NotFound 
         Response<ContentSearchResult> response = await searchClient.GetDocumentAsync<ContentSearchResult>(key);
