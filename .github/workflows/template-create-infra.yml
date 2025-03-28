@@ -57,6 +57,10 @@ on:
         description: Deploy Batch App?
         type: boolean
         default: true
+      deployUIApp:
+        description: Deploy UI App?
+        type: boolean
+        default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
@@ -86,6 +90,7 @@ jobs:
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
       deployBatchApp: ${{ inputs.deployBatchApp }}
+      deployUIApp: ${{ inputs.deployUIApp }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
 
     # ------------------------------------------------------------------------------------------------------------------------

@@ -10,8 +10,10 @@ trigger:
   - none
 
 schedules:
-  - cron: '0 12 * * 3'
-    displayName: Scan Every Wednesday
+  # - cron: '0 1 * * 3'
+  #   displayName: Scan Every Wednesday at 1AM
+  - cron: '0 1 1 * *'
+    displayName: Scan 1st of Every Month at 1AM
     branches:
       include:
         - main

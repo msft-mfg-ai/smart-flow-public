@@ -27,7 +27,7 @@ jobs:
     name: Template Env Variables
     runs-on: ubuntu-latest
     outputs:
-      ACR_NAME: '${{ vars.APP_NAME_NO_DASHES }}crdev'
+      ACR_NAME: '${{ steps.set-env.outputs.APP_NAME_NO_DASHES }}crdev'
       ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}
       ENV_CODE: ${{ env.ENV_CODE }}
 
@@ -43,6 +43,11 @@ jobs:
       - name: Set common environment variables
         id: set-env
         run: |
+          echo "vars.APP_NAME: ${{ vars.APP_NAME }}"
+          APP_NAME_NO_DASHES="$(echo ${{ vars.APP_NAME }} | tr -d '-' | tr -d '_')"
+          echo "APP_NAME_NO_DASHES=$APP_NAME_NO_DASHES"
+          echo "APP_NAME_NO_DASHES=$APP_NAME_NO_DASHES" >> $GITHUB_OUTPUT
+
           echo "ACR_REPO_NAME: ${{ env.ACR_REPO_NAME }}"
 
           echo "API_APP_PATH: ${{ env.API_APP_PATH }}"

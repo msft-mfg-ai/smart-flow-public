@@ -96,6 +96,15 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
       }
     }
   }
+
+    // Resource definition for the capability host
+    #disable-next-line BCP081
+    /*  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
+       name: '${aiHubName}-${capabilityHostName}'
+       properties: {
+         capabilityHostKind: 'Agents'
+       }
+     } */
 }
 
 output id string = aiHub.id

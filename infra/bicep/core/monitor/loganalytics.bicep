@@ -4,6 +4,7 @@ param newApplicationInsightsName string = ''
 param existingLogAnalyticsName string = ''
 param existingLogAnalyticsRgName string
 param existingApplicationInsightsName string = ''
+param existingAzureMonitorPrivateLinkScopeName string = ''
 
 param location string = resourceGroup().location
 param tags object = {}
@@ -16,6 +17,7 @@ param publicNetworkAccessForQuery string = 'Enabled'
 
 var useExistingLogAnalytics = !empty(existingLogAnalyticsName)
 var useExistingAppInsights = !empty(existingApplicationInsightsName)
+var useExistingAzureMonitorPrivateLinkScope = !empty(existingAzureMonitorPrivateLinkScopeName)
 
 resource existingLogAnalyticsResource 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = if (useExistingLogAnalytics) {
   name: existingLogAnalyticsName
@@ -55,9 +57,34 @@ resource newApplicationInsightsResource 'Microsoft.Insights/components@2020-02-0
   }
 }
 
-resource azureMonitorPrivateLinkScope 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' existing = if (!empty(azureMonitorPrivateLinkScopeName)) {
-  name: azureMonitorPrivateLinkScopeName
+resource azureMonitorPrivateLinkScope 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' existing = if (!empty(existingAzureMonitorPrivateLinkScopeName)) {
+  name: existingAzureMonitorPrivateLinkScopeName
   scope: resourceGroup(azureMonitorPrivateLinkScopeResourceGroupName)
+}
+
+resource azureMonitorPrivateLinkScopeNew 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' = if (!empty(azureMonitorPrivateLinkScopeName)) {
+  name: azureMonitorPrivateLinkScopeName
+  location: 'global'
+  tags: tags
+  properties: {
+    accessModeSettings: {
+      ingestionAccessMode: publicNetworkAccessForIngestion == 'Enabled' ? 'Open' : 'PrivateOnly'
+      queryAccessMode: publicNetworkAccessForQuery == 'Enabled' ? 'Open' : 'PrivateOnly'
+    }
+  }
+
+  resource lawScopedResource 'scopedResources@2021-07-01-preview' = {
+    name: 'law-link'
+    properties: {
+      linkedResourceId: useExistingLogAnalytics ? existingLogAnalyticsResource.id : newLogAnalyticsResource.id
+    }
+  }
+  resource appInScopedResource 'scopedResources@2021-07-01-preview' = {
+    name: 'appIn-link'
+    properties: {
+      linkedResourceId: useExistingAppInsights ? existingApplicationInsightsResource.id : newApplicationInsightsResource.id
+    }
+  }
 }
 
 module azureMonitorPrivateLinkScopePrivateEndpoint '../networking/private-endpoint.bicep' = if (!empty(privateEndpointSubnetId)) {
@@ -65,7 +92,7 @@ module azureMonitorPrivateLinkScopePrivateEndpoint '../networking/private-endpoi
   params: {
     privateEndpointName: privateEndpointName
     groupIds: ['azuremonitor']
-    targetResourceId: azureMonitorPrivateLinkScope.id
+    targetResourceId: useExistingAzureMonitorPrivateLinkScope ? azureMonitorPrivateLinkScope.id : azureMonitorPrivateLinkScopeNew.id
     subnetId: privateEndpointSubnetId
   }
 }
@@ -75,3 +102,5 @@ output applicationInsightsName string = useExistingAppInsights ? existingApplica
 output logAnalyticsWorkspaceId string = useExistingLogAnalytics ? existingLogAnalyticsResource.id : newLogAnalyticsResource.id
 output logAnalyticsWorkspaceName string = useExistingLogAnalytics ? existingLogAnalyticsResource.name : newLogAnalyticsResource.name
 output appInsightsConnectionString string = useExistingAppInsights ? existingApplicationInsightsResource.properties.ConnectionString : newApplicationInsightsResource.properties.ConnectionString
+output privateEndpointName string = privateEndpointName
+output privateLinkScopeId string = useExistingAzureMonitorPrivateLinkScope ? azureMonitorPrivateLinkScope.id : azureMonitorPrivateLinkScopeNew.id
