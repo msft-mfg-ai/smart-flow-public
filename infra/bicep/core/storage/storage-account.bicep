@@ -63,13 +63,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = if (!useExisti
       bypass: 'AzureServices'
       resourceAccessRules: resourcesWithAccess
       defaultAction: 'Deny' // publicNetworkAccess ? 'Allow' : 'Deny'
-      ipRules: empty(myIpAddress)
-        ? []
-        : [
-            {
-              value: myIpAddress
-            }
-          ]
+      ipRules: empty(myIpAddress) ? [] : [ { value: myIpAddress } ]
     }
   }
 

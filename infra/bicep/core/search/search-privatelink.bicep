@@ -25,8 +25,8 @@ resource linkToStorage 'Microsoft.Search/searchServices/sharedPrivateLinkResourc
     groupId: 'blob'
     privateLinkResourceId: existingStorageAccount.id
     requestMessage: 'automatically created by the system'
-    status: 'Approved'
-    provisioningState: 'Succeeded'
+    // status: 'Approved'
+    // provisioningState: 'Succeeded'
   }
 }
 
@@ -37,8 +37,8 @@ resource linkToOpenAi 'Microsoft.Search/searchServices/sharedPrivateLinkResource
     groupId: 'openai_account'
     privateLinkResourceId: existingOpenAiService.id
     requestMessage: 'automatically created by the system'
-    status: 'Approved'
-    provisioningState: 'Succeeded'
+    // status: 'Approved'
+    // provisioningState: 'Succeeded'
   }
   dependsOn: [
     linkToStorage

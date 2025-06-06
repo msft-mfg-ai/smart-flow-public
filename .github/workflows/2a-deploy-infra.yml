@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       deployEnvironment:
-        description: 'Environment'
+        description: Environment
         required: true
         default: 'dev'
         type: choice
@@ -23,7 +23,7 @@ on:
           - nick
           - matt
       deploymentMode:
-        description: 'Bicep Deploy Mode'
+        description: Bicep Deploy Mode
         required: true
         default: 'Incremental'
         type: choice
@@ -32,7 +32,7 @@ on:
           - Validation
           - Complete
       parameterFile:
-        description: 'Parameter File'
+        description: Parameter File
         required: true
         default: 'main.gh.bicepparam'
       createResourceGroup:
@@ -51,20 +51,27 @@ on:
         description: Add Role Assignments?
         type: boolean
         default: true
+      runBuildDeployAPI:
+        description: Build and Deploy API?
+        required: true
+        default: true
+        type: boolean
+      runDeployUI:
+        description: Deploy Sample UI?
+        required: true
+        default: true
+        type: boolean
       deployAIHub:
         description: Deploy AI Hub?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: 'Build and Deploy API'
-        required: false
-        default: true
-        type: boolean
-      runBuildDeployBatch:
-        description: 'Build and Deploy Batch'
-        required: false
-        default: false
-        type: boolean
+
+      # GH Actions restrict you to only 10 inputs... so will have to refactor this to use it!
+      # runBuildDeployBatch:
+      #   description: Build and Deploy Batch?
+      #   required: true
+      #   default: false
+      #   type: boolean
           
 jobs:
   Deploy_Bicep:
@@ -87,5 +94,6 @@ jobs:
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
-      deployBatchApp: ${{ inputs.runBuildDeployBatch }}
+      deployBatchApp: false # use parm inputs.runBuildDeployBatch
+      deployUIApp: ${{ inputs.runDeployUI }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}

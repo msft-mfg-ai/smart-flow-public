@@ -25,6 +25,8 @@ parameters:
     default: true
   - name: deployBatchApp
     default: true
+  - name: deployUIApp
+    default: true
   - name: addRoleAssignments
     default: true
 
@@ -56,6 +58,8 @@ jobs:
         value: '${{ lower(parameters.deployAIHub) }}'
       - name: deployBatchApp
         value: '${{ lower(parameters.deployBatchApp) }}'
+      - name: deployUIApp
+        value: '${{ lower(parameters.deployUIApp) }}'
       - name: addRoleAssignments
         value: '${{ lower(parameters.addRoleAssignments) }}'
 
@@ -119,8 +123,10 @@ jobs:
           echo "parameters.createDnsZones=${{ parameters.createDnsZones }}"
           echo "deployAIHub=$(deployAIHub)"
           echo "deployBatchApp=$(deployBatchApp)"
+          echo "deployUIApp=$(deployUIApp)"
           echo "parameters.deployAIHub=${{ parameters.deployAIHub }}"
           echo "parameters.deployBatchApp=${{ parameters.deployBatchApp }}"
+          echo "parameters.deployUIApp=${{ parameters.deployUIApp }}"
           echo "addRoleAssignments=$(addRoleAssignments)"
           echo "parameters.addRoleAssignments=${{ parameters.addRoleAssignments }}"
 

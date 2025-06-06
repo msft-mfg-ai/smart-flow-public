@@ -31,10 +31,22 @@ parameters:
       - PROD
       - DEV-PROD
     default: DEV
+  - name: apps
+    displayName: Which Apps to build and deploy?
+    type: string
+    values:
+      - API-UI
+      - API
+      - UI
+      - BATCH
+      - API-BATCH
+      - API-BATCH-UI
+    default: 'API-UI'
   - name: parameterFileName
     displayName: 'Bicep Parameter File:'
     type: string
     default: 'main.azdo.bicepparam'
+    
   - name: createResourceGroup
     displayName: Create Resource Group?
     type: boolean
@@ -55,14 +67,6 @@ parameters:
     displayName: Add Role Assignments?
     type: boolean
     default: true
-  - name: apps
-    displayName: Which Apps to build and deploy?
-    type: string
-    values:
-      - API
-      - BATCH
-      - API-BATCH
-    default: 'API'
   - name: buildApps
     displayName: Build Docker Images
     type: boolean
@@ -110,6 +114,7 @@ stages:
       createDnsZones: ${{ parameters.createDnsZones }}
       deployAIHub: ${{ parameters.deployAIHub }}
       deployBatchApp: ${{ contains(parameters.apps, 'BATCH') }}
+      deployUIApp: ${{ contains(parameters.apps, 'UI') }}
       addRoleAssignments: ${{ parameters.addRoleAssignments }}
       runMSDevSecOpsScan: false
       runGHASScan: false

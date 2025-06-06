@@ -15,6 +15,7 @@ param myIpAddress = '#{ADMIN_IP_ADDRESS}#'
 param principalId = '#{ADMIN_PRINCIPAL_ID}#'
 param deployAIHub = #{deployAIHub}#
 param deployBatchApp = #{deployBatchApp}#
+param deployUIApp = #{deployUIApp}#
 
 // param existingVnetName = '#{APP_NAME_NO_DASHES}#-vnet-#{envCode}#'
 // param existingVnetResourceGroupName = '#{RESOURCEGROUP_PREFIX}#-#{envCode}#'

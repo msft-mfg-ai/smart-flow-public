@@ -9,6 +9,8 @@ param cosmosPrivateEndpointName string
 param storageBlobPrivateEndpointName string
 param storageQueuePrivateEndpointName string
 param storageTablePrivateEndpointName string
+param appInsightsPrivateEndpointName string
+param hubPrivateEndpointName string
 
 param defaultAcaDomain string = ''
 param acaStaticIp string = ''
@@ -76,7 +78,7 @@ module cosmosZone 'zone-with-a-record.bicep' = {
 module storageBlobZone 'zone-with-a-record.bicep' = {
   name: 'storageBlobZone'
   params: {
-    zoneName: 'privatelink.blob.${environment().suffixes.storage}' 
+    zoneName: 'privatelink.blob.${environment().suffixes.storage}'
     vnetResourceId: vnetResourceId
     tags: tags
     privateEndpointNames: [storageBlobPrivateEndpointName]
@@ -86,7 +88,7 @@ module storageBlobZone 'zone-with-a-record.bicep' = {
 module storageTableZone 'zone-with-a-record.bicep' = {
   name: 'storageTableZone'
   params: {
-    zoneName: 'privatelink.table.${environment().suffixes.storage}' 
+    zoneName: 'privatelink.table.${environment().suffixes.storage}'
     vnetResourceId: vnetResourceId
     tags: tags
     privateEndpointNames: [storageTablePrivateEndpointName]
@@ -96,7 +98,7 @@ module storageTableZone 'zone-with-a-record.bicep' = {
 module storageQueueZone 'zone-with-a-record.bicep' = {
   name: 'storageQueueZone'
   params: {
-    zoneName: 'privatelink.queue.${environment().suffixes.storage}' 
+    zoneName: 'privatelink.queue.${environment().suffixes.storage}'
     vnetResourceId: vnetResourceId
     tags: tags
     privateEndpointNames: [storageQueuePrivateEndpointName]
@@ -129,6 +131,32 @@ resource acaZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (!empty(def
         }
       ]
     }
+  }
+}
+
+module amplsZones 'zone-with-a-record.bicep' = {
+  name: 'amplsZones'
+  params: {
+    zoneNames: [
+      'privatelink.monitor.azure.com'
+      'privatelink.oms.opinsights.azure.com'
+      'privatelink.ods.opinsights.azure.com'
+      'privatelink.agentsvc.azure-automation.net'
+    ]
+    vnetResourceId: vnetResourceId
+    tags: tags
+    privateEndpointNames: [appInsightsPrivateEndpointName]
+    existingZonesIds: [storageBlobZone.outputs.ids[0]]
+  }
+}
+
+module mlZone 'zone-with-a-record.bicep' = {
+  name: 'mlZones'
+  params: {
+    zoneNames: ['privatelink.notebooks.azure.net', 'privatelink.api.azureml.ms']
+    vnetResourceId: vnetResourceId
+    tags: tags
+    privateEndpointNames: [hubPrivateEndpointName]
   }
 }
 
