@@ -1,11 +1,9 @@
 # ------------------------------------------------------------------------------------------------------------------------
-# Action: Build and deploy all container app modules
-# ----------------------------------------------------------------------------------------------------
-# Note: in order to do multiple CA build/deploys, you need to change FW and login ONCE, otherwise
-# it tends to have token refresh issues and fail on the second and third app
+# Action: Deploy Azure Resources via Bicep Files
 # ------------------------------------------------------------------------------------------------------------------------
-name: 1 - Deploy Infra, Build, Deploy All Apps
-run-name: 1 - Deploy Infra, Build, Deploy to ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}
+name: 1 - Deploy Infrastructure
+run-name: '1 - Deploy Infra: ${{ inputs.bicepDeploymentMode }} / ${{ inputs.bicepVersion }} / ENV ${{ inputs.deployEnvironment }} by @${{ github.actor }}'
+
 on:
   # push:
   #   branches:
@@ -15,64 +13,51 @@ on:
   workflow_dispatch:
     inputs:
       deployEnvironment:
-        description: 'Environment'
+        description: Environment
         required: true
         default: 'dev'
+        type: environment
+      bicepVersion:
+        description: Version - Basic=public, Advanced=VNET
+        required: true
+        default: 'basic'
         type: choice
         options:
-          - dev
-          - qa
-          - prod
-          - lyle
-          - scott
-          - piotr
-          - chris
-          - nick
-          - matt
-      parameterFile:
-        description: 'Parameter File'
-        required: true
-        default: 'main.gh.bicepparam'
+          - basic
+          - advanced
+      appsToDeploy:
+        description: Apps to Deploy
+        default: API+UI
+        type: choice
+        options:
+          - none
+          - API
+          - UI
+          - API+UI
+      bicepDeploymentMode:
+        description: Bicep Mode
+        default: create
+        type: choice
+        options:
+          - create
+          - whatIf
       createResourceGroup:
         description: Create Resource Group?
         type: boolean
-        default: true
-      publicAccessEnabled:
-        description: Public Access Enabled?
-        type: boolean
-        default: true
-      createDnsZones:
-        description: Create DNS Zones?
-        type: boolean
-        default: true
+        default: false
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
         default: true
-      deployAIHub:
-        description: Deploy AI Hub?
+      deployAPIM:
+        description: Deploy APIM?
         type: boolean
         default: true
-      runBuildDeployAPI:
-        description: 'Build and Deploy API'
-        required: false
-        default: true
-        type: boolean
-      runBuildDeployBatch:
-        description: 'Build and Deploy Batch'
-        required: false
-        default: false
-        type: boolean
       runSecurityScan:
         description: 'Run Security Scan'
         required: false
         default: false
         type: boolean
-      # runSmokeTest:
-      #   description: 'Run Smoke Tests'
-      #   required: false
-      #   default: false
-      #   type: boolean
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -153,8 +138,8 @@ jobs:
       security-events: write
 
   # ------------------------------------------------------------------------------------------------------------------------
-  deploy-bicep:
-    name: Deploy ${{ inputs.deployEnvironment }} Bicep
+  Deploy_Bicep:
+    name: Deploy ${{ inputs.deployEnvironment }} Bicep (${{ inputs.bicepDeploymentMode }})
     uses: ./.github/workflows/template-create-infra.yml
     secrets: inherit
     permissions:
@@ -165,15 +150,15 @@ jobs:
     with:
       envCode: ${{ inputs.deployEnvironment }}
       templatePath: './infra/bicep/'
-      templateFile: 'main.bicep'
-      parameterFile: ${{ inputs.parameterFile }}
+      templateFile: 'main-${{ inputs.bicepVersion }}.bicep'
+      parameterFile: 'main-${{ inputs.bicepVersion }}.bicepparam'
       parameterFileReplaceTokens: 'true'
+      requestorName: ${{ github.actor }}
       createResourceGroup: ${{ inputs.createResourceGroup }}
-      publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
-      createDnsZones: ${{ inputs.createDnsZones }}
-      deployAIHub: ${{ inputs.deployAIHub }}
-      deployBatchApp: ${{ inputs.runBuildDeployBatch }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      deployAPIM: ${{ inputs.deployAPIM }}
+      appsToDeploy: ${{ inputs.appsToDeploy }}
+      bicepDeploymentMode: ${{ inputs.bicepDeploymentMode }}
 
   # ------------------------------------------------------------------------------------------------------------------------
   build-all:

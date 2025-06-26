@@ -25,10 +25,6 @@ on:
         required: false
         type: string
         default: 'false'
-      deploymentMode:
-        required: false
-        type: string
-        default: 'Incremental'
       runCreateInfra:
         required: false
         default: true
@@ -53,19 +49,32 @@ on:
         description: Deploy AI Hub?
         type: boolean
         default: false
-      deployBatchApp:
-        description: Deploy Batch App?
-        type: boolean
-        default: true
       addRoleAssignments:
         description: Add Role Assignments?
         type: boolean
         default: true
+      appsToDeploy:
+        description: Apps to Build and Deploy?
+        type: string
+        default: 'none'
+      deployAPIM:
+        description: Run Deploy APIM?
+        type: boolean
+        default: false
+      requestorName:
+        description: Requestor Name
+        type: string
+        default: 'UNKNOWN'
+      bicepDeploymentMode:
+        description: 'Bicep deploy action: Valid = create, validate, whatIf'
+        required: false
+        type: string
+        default: 'create'
 
 # ------------------------------------------------------------------------------------------------------------------------
 jobs:
   deploy:
-    name: Deploy Bicep
+    name: Deploy Bicep (${{ inputs.bicepDeploymentMode }})
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.envCode }}
@@ -85,15 +94,23 @@ jobs:
       publicAccessEnabled: ${{ inputs.publicAccessEnabled }}
       createDnsZones: ${{ inputs.createDnsZones }}
       deployAIHub: ${{ inputs.deployAIHub }}
-      deployBatchApp: ${{ inputs.deployBatchApp }}
       addRoleAssignments: ${{ inputs.addRoleAssignments }}
+      deployAPI: ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'API' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
+      deployUI:  ${{ inputs.appsToDeploy && inputs.appsToDeploy == 'UI' || inputs.appsToDeploy == 'API+UI' && 'true' || 'false' }}
+      deployAPIM: ${{ inputs.deployAPIM }}
+      loginWithFederatedIdentity: ${{ secrets.CICD_CLIENT_SECRET == '' && 'true' || 'false' }}
+      loginWithSecret: ${{ secrets.CICD_CLIENT_SECRET != '' && 'true' || 'false' }}
+      requestorName: ${{ inputs.requestorName }}
 
     # ------------------------------------------------------------------------------------------------------------------------
     # Outputs
     # ------------------------------------------------------------------------------------------------------------------------
     outputs:
-      HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
-      HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+      AI_HUB_ID: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}
+      AI_HUB_NAME: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
+      AI_ENDPOINT: ${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}
+      UI_CONTAINER_APP_FQDN: ${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}
+      API_CONTAINER_APP_FQDN: ${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}
   
     # ------------------------------------------------------------------------------------------------------------------------
     # Actions
@@ -111,16 +128,25 @@ jobs:
         run: |-
           echo "inputs.envCode=${{ inputs.envCode }}"
           echo "env.generatedResourceGroupName=${{ env.generatedResourceGroupName }}"
+          echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
+          echo "parameterFilePath=${{ inputs.templatePath }}${{ inputs.parameterFile }}"
+          echo "bicepDeploymentMode=${{ inputs.bicepDeploymentMode }}"
+
           echo "vars.APP_NAME=${{ vars.APP_NAME }}"
-          echo "vars.APP_PREFIX=${{ vars.APP_PREFIX }}"
           echo "vars.RESOURCEGROUP_PREFIX=${{ vars.RESOURCEGROUP_PREFIX }}"
           echo "vars.RESOURCEGROUP_LOCATION=${{ vars.RESOURCEGROUP_LOCATION }}"
+          echo "vars.OPENAI_DEPLOY_LOCATION=${{ vars.OPENAI_DEPLOY_LOCATION }}"
+          echo "vars.GLOBAL_REGION_CODE=${{ vars.GLOBAL_REGION_CODE }}"
+          echo "vars.INSTANCE_NUMBER=${{ vars.INSTANCE_NUMBER }}"
+          echo "vars.OWNER_EMAIL=${{ vars.OWNER_EMAIL }}"
+
+          echo "env.loginWithSecret=${{ env.loginWithSecret }}"
+          echo "env.loginWithFederatedIdentity=${{ env.loginWithFederatedIdentity }}"
+          echo "inputs.loginMethod=${{ inputs.loginMethod }}"
 
           echo "templatePath=${{ inputs.templatePath }}"
           echo "templateFile=${{ inputs.templateFile }}"
-          echo "templateFilePath=${{ inputs.templatePath }}${{ inputs.templateFile }}"
           echo "parameterFile=${{ inputs.parameterFile }}"
-          echo "parameterFilePath=$${{ inputs.templatePath }}${{ inputs.parameterFile }}"
           echo "parameterFileReplaceTokens=${{ inputs.parameterFileReplaceTokens }}"
           echo "---------------------------------"
           echo "##[group]All Variables:"
@@ -153,48 +179,92 @@ jobs:
           echo "##[endgroup]"
         continue-on-error: true
 
-      # https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust
-      - name: OIDC Login to Azure
-        if: ${{ inputs.runCreateInfra }}
-        uses: azure/login@v2
+      - name: Azure Login (Reusable Action)
+        uses: ./.github/actions/login-action
         with:
           client-id: ${{ secrets.CICD_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      # or - Log into Azure with Secret
-      # with:
-      #   creds: '{'clientId':'${{ secrets.AZURE_CLIENT_ID }}','clientSecret':'${{ secrets.AZURE_CLIENT_SECRET }}','subscriptionId':'${{ secrets.AZURE_SUBSCRIPTION_ID }}','tenantId':'${{ secrets.AZURE_TENANT_ID }}'}'
+          client-secret: ${{ secrets.CICD_CLIENT_SECRET }}
 
       - name: Create Resource Group
         if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
         run: az group create --name ${{ env.generatedResourceGroupName }} --location ${{ vars.RESOURCEGROUP_LOCATION }} --tags Environment=${{ inputs.envCode }}
 
+      - name: What-If Analysis (RG)
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode == 'whatIf' }}
+        id: whatif-analysis-rg
+        run: |
+          echo "Running what-if analysis..."
+          az deployment group what-if \
+            --name ${{ inputs.templateFile }}-whatif-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}} \
+            --resource-group "${{ env.generatedResourceGroupName }}" \
+            --template-file "${{ inputs.templatePath }}${{ inputs.templateFile }}" \
+            --parameters "${{ inputs.templatePath }}${{ inputs.parameterFile }}" \
+            --no-prompt true
+
+      # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      # See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
+      # Note: 'failOnStdErr' is not supported in bicep-deploy... will that be an issue in GHA where warnings are treated as errors???
       - name: Deploy Azure Resources (Sub)
-        uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup }}
+        uses: azure/bicep-deploy@v2
+        if: ${{ inputs.runCreateInfra && !inputs.deployInResourceGroup && inputs.bicepDeploymentMode != 'whatIf' }}
         id: deploy-bicep-sub
         with:
           scope: subscription
-          region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
-          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
-          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
-          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
+          location: ${{ vars.RESOURCEGROUP_LOCATION }}
+          name: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          template-file: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+          parameters-file: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          type: deployment
+          operation: ${{ inputs.bicepDeploymentMode }} # Must be: create | validate | whatIf
 
+      # The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      # See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
+      # Note: 'failOnStdErr' is not supported in bicep-deploy... will that be an issue in GHA where warnings are treated as errors???
       - name: Deploy Azure Resources (RG)
-        uses: azure/arm-deploy@v2
-        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup }}
+        uses: azure/bicep-deploy@v2
+        if: ${{ inputs.runCreateInfra && inputs.deployInResourceGroup && inputs.bicepDeploymentMode != 'whatIf' }} 
         id: deploy-bicep-rg
         with:
-          scope: resourcegroup
-          region: ${{ vars.RESOURCEGROUP_LOCATION }}
-          deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
-          resourceGroupName: ${{ env.generatedResourceGroupName }}
-          template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
-          parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
-          deploymentMode: ${{ inputs.deploymentMode }} # Must be: Incremental | Complete | Validation
-          failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
+          scope: resourceGroup
+          name: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ env.generatedResourceGroupName }}
+          template-file: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+          parameters-file: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+          type: deployment
+          operation: ${{ inputs.bicepDeploymentMode }} # Must be: create | validate | whatIf
+          #location: $ { { vars.RESOURCEGROUP_LOCATION } } # not allowed for RG deploy...
+
+      ### The azure/arm-deploy action is being deprecated, replaced by azure/bicep-deploy
+      ### See: https://github.com/Azure/arm-deploy (old) vs https://github.com/azure/bicep-deploy (new)
+      # - name: Deploy Azure Resources ARM Task Dep (Sub)
+      #   uses: azure/arm-deploy@v2
+      #   if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && !inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' } }
+      #   id: deploy-bicep-sub-old
+      #   with:
+      #     scope: subscription
+      #     region: ${{ vars.RESOURCEGROUP_LOCATION }}
+      #     deploymentName: ${{ inputs.templateFile }}-sub-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+      #     template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+      #     parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+      #     deploymentMode: ${{ inputs.armDeploymentMode }} # Must be: Incremental | Complete | Validation
+      #     failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
+      # - name: Deploy Azure Resources ARM Task Dep (RG)
+      #   uses: azure/arm-deploy@v2
+      #   if: $ { { inputs.runCreateInfra && inputs.useOldBicepTask && inputs.deployInResourceGroup && inputs.armDeploymentMode != 'Validation' } }
+      #   id: deploy-bicep-rg-old
+      #   with:
+      #     scope: resourcegroup
+      #     region: ${{ vars.RESOURCEGROUP_LOCATION }}
+      #     deploymentName: ${{ inputs.templateFile }}-rg-${{ vars.RESOURCEGROUP_LOCATION }}-${{ steps.get-date.outputs.DATE_TIME_STAMP}}
+      #     resourceGroupName: ${{ env.generatedResourceGroupName }}
+      #     template: ${{ inputs.templatePath }}${{ inputs.templateFile }}
+      #     parameters: ${{ inputs.templatePath }}${{ inputs.parameterFile }}
+      #     deploymentMode: ${{ inputs.armDeploymentMode }} # Must be: Incremental | Complete | Validation
+      #     failOnStdErr: false # if set to true, then any warning thrown by Bicep will cause the action to fail
 
       - name: Display Output
         if: ${{ inputs.runCreateInfra }}
@@ -204,10 +274,15 @@ jobs:
           echo "AI_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AI_ENDPOINT }}"
           echo "AI_HUB_ID=${{ steps.deploy-bicep-rg.outputs.AI_HUB_ID }}"
           echo "AI_HUB_NAME=${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}"
+          echo "AI_PROJECT_NAME=${{ steps.deploy-bicep-rg.outputs.AI_PROJECT_NAME }}"
           echo "AI_SEARCH_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AI_SEARCH_ENDPOINT }}"
           echo "API_CONTAINER_APP_FQDN=${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}"
           echo "API_CONTAINER_APP_NAME=${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_NAME }}"
+          echo "UI_CONTAINER_APP_FQDN=${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_FQDN }}"
+          echo "UI_CONTAINER_APP_NAME=${{ steps.deploy-bicep-rg.outputs.UI_CONTAINER_APP_NAME }}"
           echo "API_KEY=${{ steps.deploy-bicep-rg.outputs.API_KEY }}"
+          echo "API_MANAGEMENT_ID=${{ steps.deploy-bicep-rg.outputs.API_MANAGEMENT_ID }}"
+          echo "API_MANAGEMENT_NAME=${{ steps.deploy-bicep-rg.outputs.API_MANAGEMENT_NAME }}"
           echo "AZURE_CONTAINER_ENVIRONMENT_NAME=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_ENVIRONMENT_NAME }}"
           echo "AZURE_CONTAINER_REGISTRY_ENDPOINT=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT }}"
           echo "AZURE_CONTAINER_REGISTRY_NAME=${{ steps.deploy-bicep-rg.outputs.AZURE_CONTAINER_REGISTRY_NAME }}"
@@ -219,8 +294,6 @@ jobs:
           echo "MANAGED_ENVIRONMENT_ID=${{ steps.deploy-bicep-rg.outputs.MANAGED_ENVIRONMENT_ID }}"
           echo "MANAGED_ENVIRONMENT_NAME=${{ steps.deploy-bicep-rg.outputs.MANAGED_ENVIRONMENT_NAME }}"
           echo "RESOURCE_TOKEN=${{ steps.deploy-bicep-rg.outputs.RESOURCE_TOKEN }}"
-          echo "STORAGE_ACCOUNT_BATCH_IN_CONTAINER=${{ steps.deploy-bicep-rg.outputs.STORAGE_ACCOUNT_BATCH_IN_CONTAINER }}"
-          echo "STORAGE_ACCOUNT_BATCH_OUT_CONTAINER=${{ steps.deploy-bicep-rg.outputs.STORAGE_ACCOUNT_BATCH_OUT_CONTAINER }}"
           echo "STORAGE_ACCOUNT_CONTAINER=${{ steps.deploy-bicep-rg.outputs.STORAGE_ACCOUNT_CONTAINER }}"
           echo "STORAGE_ACCOUNT_NAME=${{ steps.deploy-bicep-rg.outputs.STORAGE_ACCOUNT_NAME }}"
           echo "VNET_CORE_ID=${{ steps.deploy-bicep-rg.outputs.VNET_CORE_ID }}"
@@ -234,9 +307,9 @@ jobs:
           SUMMARY: |
             # Deployment summary
             - Resource Group: ${{ env.generatedResourceGroupName }}
-            - AI Hub Name: ${{ steps.deploy-bicep-rg.outputs.AI_HUB_NAME }}
-            - API URL: [${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }}](${{ steps.deploy-bicep-rg.outputs.API_CONTAINER_APP_FQDN }})
+            - Environment: ${{ inputs.envCode }}
+            - Region: ${{ vars.GLOBAL_REGION_CODE }}
+            - Instance: ${{ vars.INSTANCE_NUMBER }}
 
         run: echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
-        # - Link to App URL: [https://${{ steps.deploy-bicep-rg.outputs.hostName }}](https://${{ steps.deploy-bicep-rg.outputs.hostName }})
