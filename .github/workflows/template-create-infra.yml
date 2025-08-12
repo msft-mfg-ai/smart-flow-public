@@ -101,7 +101,7 @@ jobs:
     steps:
       - name: Checkout Code
         if: ${{ inputs.runCreateInfra }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get the current date
         id: get-date
