@@ -48,7 +48,7 @@ jobs:
       envCode: ${{ inputs.envCode }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get the current date
         id: get-date
